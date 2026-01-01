@@ -10,6 +10,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -28,8 +29,8 @@ public class Parent {
     private String id;
 
     @ManyToOne 
-    // @JoinColumn(name = "student_id")
-    // private Student student;
+    @JoinColumn(name = "student_id")
+    private Student student;
 
     @Enumerated(EnumType.STRING)
     private Relation relation;
@@ -46,6 +47,7 @@ public class Parent {
     private String lastEducation;
     private String job;
     private String address;
+    
     @Column(length = 20)
     private String handphone;
 }

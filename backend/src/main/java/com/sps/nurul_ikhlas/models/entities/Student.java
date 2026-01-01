@@ -1,9 +1,12 @@
 package com.sps.nurul_ikhlas.models.entities;
 
 import java.time.LocalDate;
+import java.util.List;
 
+import com.sps.nurul_ikhlas.models.enums.AgeGroup;
 import com.sps.nurul_ikhlas.models.enums.StudentStatus;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -13,6 +16,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -46,12 +50,21 @@ public class Student {
     @Column(unique = true, nullable = false)
     private String nisn;
 
+    @Column(name = "child_order")
+    private Integer childOrder;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "age_group")
+    private AgeGroup ageGroup;
+
     @Column(name = "register_date")
     private LocalDate registerDate;
+
+    private String photo;
 
     @Enumerated(EnumType.STRING)
     private StudentStatus status;
 
-    private Double height;
-    private Double weight;
+    @OneToMany(mappedBy = "student", cascade = CascadeType.ALL)
+    private List<Parent> parents;
 }
