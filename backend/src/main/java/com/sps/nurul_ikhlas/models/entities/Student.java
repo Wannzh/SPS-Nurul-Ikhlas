@@ -1,7 +1,13 @@
-package com.sps.nurulikhlas.models.entities;
+package com.sps.nurul_ikhlas.models.entities;
+
+import java.time.LocalDate;
+
+import com.sps.nurul_ikhlas.models.enums.StudentStatus;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -38,5 +44,14 @@ public class Student {
     private SchoolClass currentClass;
 
     @Column(unique = true, nullable = false)
-    private String nis;
+    private String nisn;
+
+    @Column(name = "register_date")
+    private LocalDate registerDate;
+
+    @Enumerated(EnumType.STRING)
+    private StudentStatus status;
+
+    private Double height;
+    private Double weight;
 }

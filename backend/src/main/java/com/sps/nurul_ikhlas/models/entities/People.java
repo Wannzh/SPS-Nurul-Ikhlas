@@ -1,11 +1,11 @@
-package com.sps.nurulikhlas.models.entities;
+package com.sps.nurul_ikhlas.models.entities;
 
 import java.time.LocalDate;
 
-import com.sps.nurulikhlas.models.enums.Status;
-import com.sps.nurulikhlas.models.enums.Blood;
-import com.sps.nurulikhlas.models.enums.Gender;
-import com.sps.nurulikhlas.models.enums.Religion;
+import com.sps.nurul_ikhlas.models.enums.Status;
+import com.sps.nurul_ikhlas.models.enums.Blood;
+import com.sps.nurul_ikhlas.models.enums.Gender;
+import com.sps.nurul_ikhlas.models.enums.Religion;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

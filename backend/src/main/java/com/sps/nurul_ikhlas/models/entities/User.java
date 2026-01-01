@@ -1,6 +1,6 @@
-package com.sps.nurulikhlas.models.entities;
+package com.sps.nurul_ikhlas.models.entities;
 
-import com.sps.nurulikhlas.models.enums.Role;
+import com.sps.nurul_ikhlas.models.enums.Role;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

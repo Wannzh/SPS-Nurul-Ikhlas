@@ -1,9 +1,9 @@
-package com.sps.nurulikhlas.models.entities;
+package com.sps.nurul_ikhlas.models.entities;
 
 import java.time.LocalDate;
 
-import com.sps.nurulikhlas.models.enums.Relation;
-import com.sps.nurulikhlas.models.enums.Religion;
+import com.sps.nurul_ikhlas.models.enums.Relation;
+import com.sps.nurul_ikhlas.models.enums.Religion;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

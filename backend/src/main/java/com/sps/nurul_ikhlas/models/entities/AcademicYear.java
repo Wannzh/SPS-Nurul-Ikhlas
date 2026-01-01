@@ -1,4 +1,4 @@
-package com.sps.nurulikhlas.models.entities;
+package com.sps.nurul_ikhlas.models.entities;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;

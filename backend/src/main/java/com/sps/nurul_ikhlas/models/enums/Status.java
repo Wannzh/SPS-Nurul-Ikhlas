@@ -1,4 +1,4 @@
-package com.sps.nurulikhlas.models.enums;
+package com.sps.nurul_ikhlas.models.enums;
 
 public enum Status {
     YATIM,
