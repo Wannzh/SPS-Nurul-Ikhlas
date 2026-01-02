@@ -16,8 +16,6 @@ public class RegisterRequest {
     @NotBlank(message = "Nama lengkap anak wajib diisi")
     private String childFullName;
 
-    private String childNickname;
-
     @NotBlank(message = "Tempat lahir wajib diisi")
     private String birthPlace;
 
