@@ -54,7 +54,7 @@ public class DataSeeder implements CommandLineRunner {
         People adminPerson = People.builder()
                 .id(UUID.randomUUID().toString())
                 .fullName("Administrator")
-                .gender(Gender.MALE)
+                .gender(Gender.FEMALE)
                 .build();
         peopleRepository.save(adminPerson);
 
