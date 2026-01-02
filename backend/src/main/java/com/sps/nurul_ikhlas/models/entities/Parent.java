@@ -28,7 +28,7 @@ public class Parent {
     @Id
     private String id;
 
-    @ManyToOne 
+    @ManyToOne
     @JoinColumn(name = "student_id")
     private Student student;
 
@@ -47,7 +47,9 @@ public class Parent {
     private String lastEducation;
     private String job;
     private String address;
-    
+
     @Column(length = 20)
     private String handphone;
+
+    private String email;
 }
