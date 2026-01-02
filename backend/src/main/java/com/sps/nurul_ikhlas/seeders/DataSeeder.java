@@ -62,7 +62,7 @@ public class DataSeeder implements CommandLineRunner {
         User adminUser = User.builder()
                 .id(UUID.randomUUID().toString())
                 .username("admin")
-                .password(passwordEncoder.encode("password123"))
+                .password(passwordEncoder.encode("admin123"))
                 .role(Role.ADMIN)
                 .person(adminPerson)
                 .build();
