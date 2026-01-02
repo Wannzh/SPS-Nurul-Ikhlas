@@ -1,4 +1,4 @@
-package com.sps.nurul_ikhlas.payload;
+package com.sps.nurul_ikhlas.payload.request;
 
 import java.time.LocalDate;
 

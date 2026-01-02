@@ -16,8 +16,8 @@ import com.sps.nurul_ikhlas.models.enums.AcademicYearStatus;
 import com.sps.nurul_ikhlas.models.enums.AgeGroup;
 import com.sps.nurul_ikhlas.models.enums.Relation;
 import com.sps.nurul_ikhlas.models.enums.StudentStatus;
-import com.sps.nurul_ikhlas.payload.RegisterRequest;
-import com.sps.nurul_ikhlas.payload.RegisterResponse;
+import com.sps.nurul_ikhlas.payload.request.RegisterRequest;
+import com.sps.nurul_ikhlas.payload.response.RegisterResponse;
 import com.sps.nurul_ikhlas.repositories.AcademicYearRepository;
 import com.sps.nurul_ikhlas.repositories.ParentRepository;
 import com.sps.nurul_ikhlas.repositories.PeopleRepository;
@@ -115,7 +115,6 @@ public class AuthService {
                 .studentId(student.getId())
                 .studentName(childPerson.getFullName())
                 .status(StudentStatus.REGISTERED.name())
-                .message("Pendaftaran berhasil! Silakan tunggu verifikasi dari admin.")
                 .build();
     }
 

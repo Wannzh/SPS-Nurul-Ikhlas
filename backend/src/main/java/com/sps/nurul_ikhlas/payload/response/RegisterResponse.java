@@ -1,4 +1,4 @@
-package com.sps.nurul_ikhlas.payload;
+package com.sps.nurul_ikhlas.payload.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -11,7 +11,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class RegisterResponse {
     private String studentId;
-    private String message;
     private String studentName;
     private String status;
 }

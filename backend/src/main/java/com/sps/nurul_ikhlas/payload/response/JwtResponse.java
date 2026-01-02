@@ -1,4 +1,4 @@
-package com.sps.nurul_ikhlas.payload;
+package com.sps.nurul_ikhlas.payload.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
