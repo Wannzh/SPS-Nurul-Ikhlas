@@ -21,8 +21,9 @@ export default function Register() {
         religion: 'ISLAM',
         // Parent Info
         fatherName: '',
+        fatherJob: '',
         motherName: '',
-        parentJob: '',
+        motherJob: '',
         phoneNumber: '',
         email: '',
         // Address
@@ -122,7 +123,7 @@ export default function Register() {
                 window.location.href = invoiceUrl;
             } else {
                 // Fallback if no invoice URL (should not happen usually)
-                navigate('/payment-success');
+                navigate('/payment/success');
             }
         } catch (error) {
             console.error("Registration failed", error);
@@ -189,19 +190,28 @@ export default function Register() {
                     {step === 2 && (
                         <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
                             <h3 className="text-lg font-medium">Data Orang Tua</h3>
+
                             <div className="space-y-2">
                                 <Label htmlFor="fatherName">Nama Ayah</Label>
                                 <Input name="fatherName" id="fatherName" value={formData.fatherName} onChange={handleChange} required />
                             </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="fatherJob">Pekerjaan Ayah</Label>
+                                <Input name="fatherJob" id="fatherJob" value={formData.fatherJob} onChange={handleChange} placeholder="Contoh: Wiraswasta" />
+                            </div>
+
                             <div className="space-y-2">
                                 <Label htmlFor="motherName">Nama Ibu</Label>
                                 <Input name="motherName" id="motherName" value={formData.motherName} onChange={handleChange} required />
                             </div>
+
                             <div className="space-y-2">
-                                <Label htmlFor="parentJob">Pekerjaan Orang Tua</Label>
-                                <Input name="parentJob" id="parentJob" value={formData.parentJob} onChange={handleChange} placeholder="Contoh: Wiraswasta" />
+                                <Label htmlFor="motherJob">Pekerjaan Ibu</Label>
+                                <Input name="motherJob" id="motherJob" value={formData.motherJob} onChange={handleChange} placeholder="Contoh: Ibu Rumah Tangga" />
                             </div>
-                            <div className="grid grid-cols-2 gap-4">
+
+                            <div className="grid grid-cols-2 gap-4 border-t pt-4 mt-2">
                                 <div className="space-y-2">
                                     <Label htmlFor="phoneNumber">No. Telepon / WA</Label>
                                     <Input name="phoneNumber" id="phoneNumber" value={formData.phoneNumber} onChange={handleChange} placeholder="08xxxxxxxxxx" required />

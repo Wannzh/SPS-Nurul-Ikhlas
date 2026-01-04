@@ -6,7 +6,8 @@ import { Layout } from './components/layout/Layout';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
-import PaymentSuccess from './pages/PaymentSuccess';
+import PaymentSuccess from './pages/payment/PaymentSuccess';
+import PaymentFailed from './pages/payment/PaymentFailed';
 import Dashboard from './pages/admin/Dashboard';
 import NotFound from './pages/NotFound';
 import Unauthorized from './pages/Unauthorized';
@@ -36,7 +37,8 @@ function App() {
           <Route index element={<Home />} />
           <Route path="login" element={<Login />} />
           <Route path="register" element={<Register />} />
-          <Route path="payment-success" element={<PaymentSuccess />} />
+          <Route path="payment/success" element={<PaymentSuccess />} />
+          <Route path="payment/failed" element={<PaymentFailed />} />
           <Route path="unauthorized" element={<Unauthorized />} />
           <Route path="*" element={<NotFound />} />
         </Route>
