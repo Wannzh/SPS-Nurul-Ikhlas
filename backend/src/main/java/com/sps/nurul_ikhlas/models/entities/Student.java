@@ -67,4 +67,14 @@ public class Student {
 
     @OneToMany(mappedBy = "student", cascade = CascadeType.ALL)
     private List<Parent> parents;
+
+    // Payment fields
+    @Column(name = "xendit_invoice_id")
+    private String xenditInvoiceId;
+
+    @Column(name = "payment_url")
+    private String paymentUrl;
+
+    @Column(name = "payment_status")
+    private String paymentStatus;
 }

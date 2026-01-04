@@ -24,6 +24,8 @@ import com.sps.nurul_ikhlas.repositories.PeopleRepository;
 import com.sps.nurul_ikhlas.repositories.StudentRepository;
 import com.sps.nurul_ikhlas.repositories.VillageRepository;
 import com.sps.nurul_ikhlas.services.AuthService;
+import com.sps.nurul_ikhlas.services.PaymentService;
+import com.xendit.model.Invoice;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,6 +40,9 @@ public class AuthServiceImpl implements AuthService {
     private final ParentRepository parentRepository;
     private final VillageRepository villageRepository;
     private final AcademicYearRepository academicYearRepository;
+    private final PaymentService paymentService;
+
+    private static final Double REGISTRATION_FEE = 150000.0; // IDR 150,000
 
     @Override
     @Transactional
@@ -57,6 +62,7 @@ public class AuthServiceImpl implements AuthService {
                 .orElseThrow(
                         () -> new RuntimeException("Tidak ada tahun ajaran yang aktif. Pendaftaran belum dibuka."));
 
+        // Create People (Child)
         People childPerson = People.builder()
                 .id(UUID.randomUUID().toString())
                 .fullName(request.getChildFullName())
@@ -70,18 +76,22 @@ public class AuthServiceImpl implements AuthService {
         peopleRepository.save(childPerson);
         log.info("Created People entry for child: {}", childPerson.getFullName());
 
+        // Calculate AgeGroup
         AgeGroup ageGroup = calculateAgeGroup(request.getBirthDate());
 
+        // Create Student with UNPAID status
         Student student = Student.builder()
                 .person(childPerson)
                 .batch(academicYear)
                 .ageGroup(ageGroup)
                 .registerDate(LocalDate.now())
-                .status(StudentStatus.REGISTERED)
+                .status(StudentStatus.UNPAID)
+                .paymentStatus("PENDING")
                 .build();
         studentRepository.save(student);
-        log.info("Created Student entry with ID: {}", student.getId());
+        log.info("Created Student entry with ID: {} (Status: UNPAID)", student.getId());
 
+        // Create Father Parent
         Parent father = Parent.builder()
                 .id(UUID.randomUUID().toString())
                 .student(student)
@@ -93,6 +103,7 @@ public class AuthServiceImpl implements AuthService {
                 .build();
         parentRepository.save(father);
 
+        // Create Mother Parent
         Parent mother = Parent.builder()
                 .id(UUID.randomUUID().toString())
                 .student(student)
@@ -103,10 +114,29 @@ public class AuthServiceImpl implements AuthService {
 
         log.info("Created Parent entries for student: {}", student.getId());
 
+        // Create Xendit Invoice
+        String invoiceUrl = null;
+        try {
+            Invoice invoice = paymentService.createInvoice(student, father, REGISTRATION_FEE);
+
+            // Update student with payment info
+            student.setXenditInvoiceId(invoice.getId());
+            student.setPaymentUrl(invoice.getInvoiceUrl());
+            studentRepository.save(student);
+
+            invoiceUrl = invoice.getInvoiceUrl();
+            log.info("Created Xendit Invoice: {} for student: {}", invoice.getId(), student.getId());
+        } catch (Exception e) {
+            log.error("Failed to create Xendit invoice: {}", e.getMessage());
+            // Don't fail registration, just log the error
+            // User can retry payment later
+        }
+
         return RegisterResponse.builder()
                 .studentId(student.getId())
                 .studentName(childPerson.getFullName())
-                .status(StudentStatus.REGISTERED.name())
+                .status(StudentStatus.UNPAID.name())
+                .invoiceUrl(invoiceUrl)
                 .build();
     }
 

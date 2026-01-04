@@ -13,4 +13,5 @@ public class RegisterResponse {
     private String studentId;
     private String studentName;
     private String status;
+    private String invoiceUrl;
 }
