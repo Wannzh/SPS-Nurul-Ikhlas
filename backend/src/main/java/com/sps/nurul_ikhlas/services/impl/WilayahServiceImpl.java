@@ -33,11 +33,18 @@ public class WilayahServiceImpl implements WilayahService {
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
 
-    private static final String API_BASE_URL = "https://emsifa.github.io/api-wilayah-indonesia/api";
+    private static final String API_BASE_URL = "https://www.emsifa.com/api-wilayah-indonesia/api";
 
     @Override
     public List<Province> getAllProvinces() {
-        return provinceRepository.findAll();
+        List<Province> provinces = provinceRepository.findAll();
+
+        if (provinces.isEmpty()) {
+            log.info("Provinces not found in DB. Fetching from external API...");
+            provinces = fetchAndSaveProvinces();
+        }
+
+        return provinces;
     }
 
     @Override
@@ -168,6 +175,34 @@ public class WilayahServiceImpl implements WilayahService {
 
         } catch (Exception e) {
             log.error("Failed to fetch villages for district {}: {}", districtId, e.getMessage());
+            return List.of();
+        }
+    }
+
+    private List<Province> fetchAndSaveProvinces() {
+        try {
+            String url = API_BASE_URL + "/provinces.json";
+            String response = restTemplate.getForObject(url, String.class);
+
+            List<Map<String, String>> provincesData = objectMapper.readValue(
+                    response,
+                    new TypeReference<List<Map<String, String>>>() {
+                    });
+
+            List<Province> provinces = provincesData.stream()
+                    .map(data -> Province.builder()
+                            .id(data.get("id"))
+                            .name(data.get("name"))
+                            .build())
+                    .toList();
+
+            provinceRepository.saveAll(provinces);
+            log.info("Saved {} provinces to DB", provinces.size());
+
+            return provinces;
+
+        } catch (Exception e) {
+            log.error("Failed to fetch provinces: {}", e.getMessage());
             return List.of();
         }
     }

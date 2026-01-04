@@ -47,7 +47,7 @@ public class Student {
     @JoinColumn(name = "current_class_id")
     private SchoolClass currentClass;
 
-    @Column(unique = true)
+    @Column(unique = true, nullable = true)
     private String nisn;
 
     @Column(name = "child_order")

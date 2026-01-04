@@ -84,7 +84,7 @@ public class AuthServiceImpl implements AuthService {
                 .village(village)
                 .address(request.getAddress())
                 .build();
-        peopleRepository.save(childPerson);
+        childPerson = peopleRepository.save(childPerson);
         log.info("Created People entry for child: {}", childPerson.getFullName());
 
         // Calculate AgeGroup
@@ -99,7 +99,7 @@ public class AuthServiceImpl implements AuthService {
                 .status(StudentStatus.UNPAID)
                 .paymentStatus("PENDING")
                 .build();
-        studentRepository.save(student);
+        student = studentRepository.save(student);
         log.info("Created Student entry with ID: {} linked to Academic Year: {}", student.getId(),
                 academicYear.getName());
 
@@ -109,7 +109,7 @@ public class AuthServiceImpl implements AuthService {
                 .student(student)
                 .relation(Relation.AYAH)
                 .name(request.getFatherName())
-                .job(request.getParentJob())
+                .job(request.getFatherJob())
                 .handphone(request.getPhoneNumber())
                 .email(request.getEmail())
                 .build();
@@ -121,6 +121,7 @@ public class AuthServiceImpl implements AuthService {
                 .student(student)
                 .relation(Relation.IBU)
                 .name(request.getMotherName())
+                .job(request.getMotherJob())
                 .build();
         parentRepository.save(mother);
 

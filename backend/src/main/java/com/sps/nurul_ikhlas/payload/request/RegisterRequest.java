@@ -35,7 +35,9 @@ public class RegisterRequest {
     @NotBlank(message = "Nama ibu wajib diisi")
     private String motherName;
 
-    private String parentJob;
+    private String motherJob;
+
+    private String fatherJob;
 
     @NotBlank(message = "Nomor telepon wajib diisi")
     private String phoneNumber;
