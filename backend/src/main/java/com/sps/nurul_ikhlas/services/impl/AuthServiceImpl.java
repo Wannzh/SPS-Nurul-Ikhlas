@@ -25,7 +25,6 @@ import com.sps.nurul_ikhlas.repositories.StudentRepository;
 import com.sps.nurul_ikhlas.repositories.VillageRepository;
 import com.sps.nurul_ikhlas.services.AuthService;
 import com.sps.nurul_ikhlas.services.PaymentService;
-import com.xendit.model.Invoice;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -42,25 +41,37 @@ public class AuthServiceImpl implements AuthService {
     private final AcademicYearRepository academicYearRepository;
     private final PaymentService paymentService;
 
-    private static final Double REGISTRATION_FEE = 150000.0; // IDR 150,000
+    private static final Double DEFAULT_REGISTRATION_FEE = 150000.0; // Fallback if not set
 
     @Override
     @Transactional
     public RegisterResponse registerStudent(RegisterRequest request) {
+        // Validate agreement
         if (!Boolean.TRUE.equals(request.getIsAgreed())) {
             throw new RuntimeException("Anda harus menyetujui persyaratan pendaftaran");
         }
 
+        // Validate phone number uniqueness
         if (parentRepository.existsByHandphone(request.getPhoneNumber())) {
             throw new RuntimeException("Nomor telepon sudah terdaftar. Silakan gunakan nomor lain atau hubungi admin.");
         }
 
+        // Fetch Village
         Village village = villageRepository.findById(request.getVillageId())
                 .orElseThrow(() -> new RuntimeException("Desa/Kelurahan tidak ditemukan"));
 
+        // Step 1: Fetch active Academic Year
         AcademicYear academicYear = academicYearRepository.findByStatus(AcademicYearStatus.OPEN)
                 .orElseThrow(
-                        () -> new RuntimeException("Tidak ada tahun ajaran yang aktif. Pendaftaran belum dibuka."));
+                        () -> new RuntimeException("Pendaftaran belum dibuka. Tidak ada tahun ajaran yang aktif."));
+
+        // Step 2: Get dynamic registration fee
+        Double registrationFee = academicYear.getRegistrationFee();
+        if (registrationFee == null || registrationFee <= 0) {
+            log.warn("Registration fee not set for academic year: {}. Using default fee.", academicYear.getName());
+            registrationFee = DEFAULT_REGISTRATION_FEE;
+        }
+        log.info("Registration fee for {}: Rp {}", academicYear.getName(), registrationFee);
 
         // Create People (Child)
         People childPerson = People.builder()
@@ -79,7 +90,7 @@ public class AuthServiceImpl implements AuthService {
         // Calculate AgeGroup
         AgeGroup ageGroup = calculateAgeGroup(request.getBirthDate());
 
-        // Create Student with UNPAID status
+        // Step 4: Create Student linked to Academic Year with UNPAID status
         Student student = Student.builder()
                 .person(childPerson)
                 .batch(academicYear)
@@ -89,7 +100,8 @@ public class AuthServiceImpl implements AuthService {
                 .paymentStatus("PENDING")
                 .build();
         studentRepository.save(student);
-        log.info("Created Student entry with ID: {} (Status: UNPAID)", student.getId());
+        log.info("Created Student entry with ID: {} linked to Academic Year: {}", student.getId(),
+                academicYear.getName());
 
         // Create Father Parent
         Parent father = Parent.builder()
@@ -114,10 +126,10 @@ public class AuthServiceImpl implements AuthService {
 
         log.info("Created Parent entries for student: {}", student.getId());
 
-        // Create Xendit Invoice
+        // Step 3: Create Xendit Invoice with dynamic fee
         String invoiceUrl = null;
         try {
-            Invoice invoice = paymentService.createInvoice(student, father, REGISTRATION_FEE);
+            var invoice = paymentService.createInvoice(student, father, registrationFee);
 
             // Update student with payment info
             student.setXenditInvoiceId(invoice.getId());
@@ -125,11 +137,11 @@ public class AuthServiceImpl implements AuthService {
             studentRepository.save(student);
 
             invoiceUrl = invoice.getInvoiceUrl();
-            log.info("Created Xendit Invoice: {} for student: {}", invoice.getId(), student.getId());
+            log.info("Created Xendit Invoice: {} for student: {} with fee: Rp {}",
+                    invoice.getId(), student.getId(), registrationFee);
         } catch (Exception e) {
             log.error("Failed to create Xendit invoice: {}", e.getMessage());
-            // Don't fail registration, just log the error
-            // User can retry payment later
+            // Don't fail registration, allow retry later
         }
 
         return RegisterResponse.builder()

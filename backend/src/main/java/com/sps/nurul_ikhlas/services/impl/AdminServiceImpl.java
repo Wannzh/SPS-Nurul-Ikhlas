@@ -8,11 +8,15 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.sps.nurul_ikhlas.models.entities.AcademicYear;
 import com.sps.nurul_ikhlas.models.entities.Parent;
 import com.sps.nurul_ikhlas.models.entities.Student;
 import com.sps.nurul_ikhlas.models.entities.User;
+import com.sps.nurul_ikhlas.models.enums.AcademicYearStatus;
 import com.sps.nurul_ikhlas.models.enums.Role;
 import com.sps.nurul_ikhlas.models.enums.StudentStatus;
+import com.sps.nurul_ikhlas.payload.request.AcademicYearRequest;
+import com.sps.nurul_ikhlas.repositories.AcademicYearRepository;
 import com.sps.nurul_ikhlas.repositories.ParentRepository;
 import com.sps.nurul_ikhlas.repositories.StudentRepository;
 import com.sps.nurul_ikhlas.repositories.UserRepository;
@@ -30,11 +34,16 @@ public class AdminServiceImpl implements AdminService {
     private final StudentRepository studentRepository;
     private final ParentRepository parentRepository;
     private final UserRepository userRepository;
+    private final AcademicYearRepository academicYearRepository;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
 
     private static final String ALPHANUMERIC = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
     private static final SecureRandom RANDOM = new SecureRandom();
+
+    // =========================================
+    // STUDENT MANAGEMENT
+    // =========================================
 
     @Override
     @Transactional
@@ -85,6 +94,13 @@ public class AdminServiceImpl implements AdminService {
                 studentName, primaryParent.getEmail());
     }
 
+    @Override
+    public List<Student> getRegisteredStudents() {
+        return studentRepository.findAll().stream()
+                .filter(s -> s.getStatus() == StudentStatus.REGISTERED)
+                .toList();
+    }
+
     private String generateRandomPassword(int length) {
         StringBuilder sb = new StringBuilder(length);
         for (int i = 0; i < length; i++) {
@@ -93,10 +109,94 @@ public class AdminServiceImpl implements AdminService {
         return sb.toString();
     }
 
+    // =========================================
+    // ACADEMIC YEAR CRUD
+    // =========================================
+
     @Override
-    public List<Student> getRegisteredStudents() {
-        return studentRepository.findAll().stream()
-                .filter(s -> s.getStatus() == StudentStatus.REGISTERED)
-                .toList();
+    @Transactional
+    public AcademicYear createAcademicYear(AcademicYearRequest request) {
+        // Validate: if status is OPEN, fee must be provided
+        if (request.getStatus() == AcademicYearStatus.OPEN) {
+            if (request.getRegistrationFee() == null || request.getRegistrationFee() <= 0) {
+                throw new RuntimeException("Biaya pendaftaran wajib diisi untuk tahun ajaran yang OPEN");
+            }
+            // Close any existing OPEN academic year
+            academicYearRepository.findByStatus(AcademicYearStatus.OPEN)
+                    .ifPresent(existing -> {
+                        existing.setStatus(AcademicYearStatus.CLOSED);
+                        academicYearRepository.save(existing);
+                        log.info("Closed previous academic year: {}", existing.getName());
+                    });
+        }
+
+        AcademicYear academicYear = AcademicYear.builder()
+                .id(UUID.randomUUID().toString())
+                .name(request.getName())
+                .status(request.getStatus())
+                .registrationFee(request.getRegistrationFee())
+                .build();
+
+        academicYearRepository.save(academicYear);
+        log.info("Created academic year: {} with fee: {}", academicYear.getName(), academicYear.getRegistrationFee());
+
+        return academicYear;
+    }
+
+    @Override
+    @Transactional
+    public AcademicYear updateAcademicYear(String id, AcademicYearRequest request) {
+        AcademicYear academicYear = academicYearRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Tahun ajaran tidak ditemukan"));
+
+        // Validate: if status is being changed to OPEN, fee must be provided
+        if (request.getStatus() == AcademicYearStatus.OPEN) {
+            if (request.getRegistrationFee() == null || request.getRegistrationFee() <= 0) {
+                throw new RuntimeException("Biaya pendaftaran wajib diisi untuk tahun ajaran yang OPEN");
+            }
+            // Close any other OPEN academic year (except this one)
+            academicYearRepository.findByStatus(AcademicYearStatus.OPEN)
+                    .filter(existing -> !existing.getId().equals(id))
+                    .ifPresent(existing -> {
+                        existing.setStatus(AcademicYearStatus.CLOSED);
+                        academicYearRepository.save(existing);
+                        log.info("Closed previous academic year: {}", existing.getName());
+                    });
+        }
+
+        academicYear.setName(request.getName());
+        academicYear.setStatus(request.getStatus());
+        academicYear.setRegistrationFee(request.getRegistrationFee());
+
+        academicYearRepository.save(academicYear);
+        log.info("Updated academic year: {} with fee: {}", academicYear.getName(), academicYear.getRegistrationFee());
+
+        return academicYear;
+    }
+
+    @Override
+    public List<AcademicYear> getAllAcademicYears() {
+        return academicYearRepository.findAll();
+    }
+
+    @Override
+    public AcademicYear getActiveAcademicYear() {
+        return academicYearRepository.findByStatus(AcademicYearStatus.OPEN)
+                .orElseThrow(() -> new RuntimeException("Tidak ada tahun ajaran yang aktif"));
+    }
+
+    @Override
+    @Transactional
+    public void deleteAcademicYear(String id) {
+        AcademicYear academicYear = academicYearRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Tahun ajaran tidak ditemukan"));
+
+        // Prevent deleting OPEN academic year
+        if (academicYear.getStatus() == AcademicYearStatus.OPEN) {
+            throw new RuntimeException("Tidak dapat menghapus tahun ajaran yang sedang aktif");
+        }
+
+        academicYearRepository.delete(academicYear);
+        log.info("Deleted academic year: {}", academicYear.getName());
     }
 }
