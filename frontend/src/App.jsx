@@ -31,6 +31,7 @@ import BillTypes from './pages/admin/BillTypes';
 import Uniforms from './pages/admin/Uniforms';
 import ParentDashboard from './pages/parent/ParentDashboard';
 import UniformOrder from './pages/parent/UniformOrder';
+import MyOrders from './pages/parent/MyOrders';
 
 function App() {
   return (
@@ -63,6 +64,7 @@ function App() {
         <Route element={<ProtectedRoute allowedRoles={['ORTU']} />}>
           <Route path="/parent/dashboard" element={<ParentDashboard />} />
           <Route path="/parent/uniform-order" element={<UniformOrder />} />
+          <Route path="/parent/my-orders" element={<MyOrders />} />
         </Route>
       </Routes>
     </AuthProvider>
