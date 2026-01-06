@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.Period;
 import java.util.UUID;
 
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -11,17 +12,20 @@ import com.sps.nurul_ikhlas.models.entities.AcademicYear;
 import com.sps.nurul_ikhlas.models.entities.Parent;
 import com.sps.nurul_ikhlas.models.entities.People;
 import com.sps.nurul_ikhlas.models.entities.Student;
+import com.sps.nurul_ikhlas.models.entities.User;
 import com.sps.nurul_ikhlas.models.entities.Village;
 import com.sps.nurul_ikhlas.models.enums.AcademicYearStatus;
 import com.sps.nurul_ikhlas.models.enums.AgeGroup;
 import com.sps.nurul_ikhlas.models.enums.Relation;
 import com.sps.nurul_ikhlas.models.enums.StudentStatus;
 import com.sps.nurul_ikhlas.payload.request.RegisterRequest;
+import com.sps.nurul_ikhlas.payload.request.SetupPasswordRequest;
 import com.sps.nurul_ikhlas.payload.response.RegisterResponse;
 import com.sps.nurul_ikhlas.repositories.AcademicYearRepository;
 import com.sps.nurul_ikhlas.repositories.ParentRepository;
 import com.sps.nurul_ikhlas.repositories.PeopleRepository;
 import com.sps.nurul_ikhlas.repositories.StudentRepository;
+import com.sps.nurul_ikhlas.repositories.UserRepository;
 import com.sps.nurul_ikhlas.repositories.VillageRepository;
 import com.sps.nurul_ikhlas.services.AuthService;
 import com.sps.nurul_ikhlas.services.PaymentService;
@@ -39,9 +43,11 @@ public class AuthServiceImpl implements AuthService {
     private final ParentRepository parentRepository;
     private final VillageRepository villageRepository;
     private final AcademicYearRepository academicYearRepository;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
     private final PaymentService paymentService;
 
-    private static final Double DEFAULT_REGISTRATION_FEE = 150000.0; // Fallback if not set
+    private static final Double DEFAULT_REGISTRATION_FEE = 150000.0;
 
     @Override
     @Transactional
@@ -53,24 +59,25 @@ public class AuthServiceImpl implements AuthService {
 
         // Validate phone number uniqueness
         if (parentRepository.existsByHandphone(request.getFatherNumber())) {
-            throw new RuntimeException("Nomor telepon sudah terdaftar. Silakan gunakan nomor lain atau hubungi admin.");
+            throw new RuntimeException(
+                    "Nomor telepon ayah sudah terdaftar. Silakan gunakan nomor lain atau hubungi admin.");
         }
 
-        // Validate phone number uniqueness
         if (parentRepository.existsByHandphone(request.getMotherNumber())) {
-            throw new RuntimeException("Nomor telepon sudah terdaftar. Silakan gunakan nomor lain atau hubungi admin.");
+            throw new RuntimeException(
+                    "Nomor telepon ibu sudah terdaftar. Silakan gunakan nomor lain atau hubungi admin.");
         }
 
         // Fetch Village
         Village village = villageRepository.findById(request.getVillageId())
                 .orElseThrow(() -> new RuntimeException("Desa/Kelurahan tidak ditemukan"));
 
-        // Step 1: Fetch active Academic Year
+        // Fetch active Academic Year
         AcademicYear academicYear = academicYearRepository.findByStatus(AcademicYearStatus.OPEN)
                 .orElseThrow(
                         () -> new RuntimeException("Pendaftaran belum dibuka. Tidak ada tahun ajaran yang aktif."));
 
-        // Step 2: Get dynamic registration fee
+        // Get dynamic registration fee
         Double registrationFee = academicYear.getRegistrationFee();
         if (registrationFee == null || registrationFee <= 0) {
             log.warn("Registration fee not set for academic year: {}. Using default fee.", academicYear.getName());
@@ -82,6 +89,7 @@ public class AuthServiceImpl implements AuthService {
         People childPerson = People.builder()
                 .id(UUID.randomUUID().toString())
                 .fullName(request.getChildFullName())
+                .nickname(request.getChildNickname())
                 .birthPlace(request.getBirthPlace())
                 .birthDate(request.getBirthDate())
                 .gender(request.getGender())
@@ -95,7 +103,7 @@ public class AuthServiceImpl implements AuthService {
         // Calculate AgeGroup
         AgeGroup ageGroup = calculateAgeGroup(request.getBirthDate());
 
-        // Step 4: Create Student linked to Academic Year with UNPAID status
+        // Create Student linked to Academic Year with UNPAID status
         Student student = Student.builder()
                 .person(childPerson)
                 .batch(academicYear)
@@ -134,7 +142,7 @@ public class AuthServiceImpl implements AuthService {
 
         log.info("Created Parent entries for student: {}", student.getId());
 
-        // Step 3: Create Xendit Invoice with dynamic fee
+        // Create Xendit Invoice with dynamic fee
         String invoiceUrl = null;
         try {
             var invoice = paymentService.createInvoice(student, father, registrationFee);
@@ -145,11 +153,10 @@ public class AuthServiceImpl implements AuthService {
             studentRepository.save(student);
 
             invoiceUrl = invoice.getInvoiceUrl();
-            log.info("Created Xendit Invoice: {} for student: {} with fee: Rp {}",
-                    invoice.getId(), student.getId(), registrationFee);
+            log.info("Created Xendit Invoice: {} for student: {} with fee: Rp {}", invoice.getId(), student.getId(),
+                    registrationFee);
         } catch (Exception e) {
             log.error("Failed to create Xendit invoice: {}", e.getMessage());
-            // Don't fail registration, allow retry later
         }
 
         return RegisterResponse.builder()
@@ -158,6 +165,29 @@ public class AuthServiceImpl implements AuthService {
                 .status(StudentStatus.UNPAID.name())
                 .invoiceUrl(invoiceUrl)
                 .build();
+    }
+
+    @Override
+    @Transactional
+    public String setupPassword(SetupPasswordRequest request) {
+        // Find user by verification token
+        User user = userRepository.findByVerificationToken(request.getToken())
+                .orElseThrow(() -> new RuntimeException("Token tidak valid atau sudah kadaluarsa"));
+
+        // Check if password is already set
+        if (Boolean.TRUE.equals(user.getIsPasswordSet())) {
+            throw new RuntimeException("Password sudah pernah diatur. Silakan login atau gunakan fitur lupa password.");
+        }
+
+        // Update user password
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        user.setVerificationToken(null); // Invalidate token
+        user.setIsPasswordSet(true);
+        userRepository.save(user);
+
+        log.info("Password setup completed for user: {}", user.getUsername());
+
+        return "Password berhasil dibuat. Silakan login dengan email dan password baru Anda.";
     }
 
     private AgeGroup calculateAgeGroup(LocalDate birthDate) {

@@ -1,6 +1,5 @@
 package com.sps.nurul_ikhlas.services.impl;
 
-import java.security.SecureRandom;
 import java.util.List;
 import java.util.UUID;
 
@@ -38,9 +37,6 @@ public class AdminServiceImpl implements AdminService {
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
 
-    private static final String ALPHANUMERIC = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-    private static final SecureRandom RANDOM = new SecureRandom();
-
     // =========================================
     // STUDENT MANAGEMENT
     // =========================================
@@ -66,31 +62,35 @@ public class AdminServiceImpl implements AdminService {
                 .orElseThrow(
                         () -> new RuntimeException("Data orang tua dengan nomor telepon dan email tidak ditemukan"));
 
-        String username = primaryParent.getHandphone();
-        String rawPassword = generateRandomPassword(6);
+        String username = primaryParent.getEmail();
 
         if (userRepository.existsByUsername(username)) {
-            throw new RuntimeException("Akun dengan nomor telepon ini sudah ada. Silakan hubungi admin.");
+            throw new RuntimeException("Akun dengan email ini sudah ada. Silakan hubungi admin.");
         }
+
+        // Generate verification token instead of password
+        String verificationToken = UUID.randomUUID().toString();
 
         User user = User.builder()
                 .id(UUID.randomUUID().toString())
                 .username(username)
-                .password(passwordEncoder.encode(rawPassword))
+                .password(passwordEncoder.encode("PENDING_SETUP_" + UUID.randomUUID().toString()))
                 .role(Role.ORTU)
                 .person(student.getPerson())
+                .verificationToken(verificationToken)
+                .isPasswordSet(false)
                 .build();
         userRepository.save(user);
-        log.info("Created User account for parent: {}", username);
+        log.info("Created User account for parent: {} with activation token", username);
 
         String studentName = student.getPerson().getFullName();
-        emailService.sendAccountCredentials(
+        emailService.sendActivationLink(
                 primaryParent.getEmail(),
                 studentName,
                 username,
-                rawPassword);
+                verificationToken);
 
-        return String.format("Siswa %s berhasil diverifikasi. Kredensial dikirim ke email %s",
+        return String.format("Siswa %s berhasil diverifikasi. Link aktivasi dikirim ke email %s",
                 studentName, primaryParent.getEmail());
     }
 
@@ -99,14 +99,6 @@ public class AdminServiceImpl implements AdminService {
         return studentRepository.findAll().stream()
                 .filter(s -> s.getStatus() == StudentStatus.REGISTERED)
                 .toList();
-    }
-
-    private String generateRandomPassword(int length) {
-        StringBuilder sb = new StringBuilder(length);
-        for (int i = 0; i < length; i++) {
-            sb.append(ALPHANUMERIC.charAt(RANDOM.nextInt(ALPHANUMERIC.length())));
-        }
-        return sb.toString();
     }
 
     // =========================================

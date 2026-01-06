@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.sps.nurul_ikhlas.payload.ApiResponse;
 import com.sps.nurul_ikhlas.payload.request.LoginRequest;
 import com.sps.nurul_ikhlas.payload.request.RegisterRequest;
+import com.sps.nurul_ikhlas.payload.request.SetupPasswordRequest;
 import com.sps.nurul_ikhlas.payload.response.JwtResponse;
 import com.sps.nurul_ikhlas.payload.response.RegisterResponse;
 import com.sps.nurul_ikhlas.security.JwtUtils;
@@ -63,5 +64,12 @@ public class AuthController {
                 RegisterResponse response = authService.registerStudent(request);
                 return ResponseEntity.ok(ApiResponse
                                 .success("Pendaftaran berhasil! Silakan tunggu verifikasi dari admin.", response));
+        }
+
+        @PostMapping("/setup-password")
+        public ResponseEntity<ApiResponse<String>> setupPassword(
+                        @Valid @RequestBody SetupPasswordRequest request) {
+                String message = authService.setupPassword(request);
+                return ResponseEntity.ok(ApiResponse.success(message));
         }
 }

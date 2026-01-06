@@ -36,4 +36,11 @@ public class User {
 
     @Enumerated(EnumType.STRING)
     private Role role;
+
+    @Column(name = "verification_token")
+    private String verificationToken;
+
+    @Column(name = "is_password_set")
+    @Builder.Default
+    private Boolean isPasswordSet = false;
 }
