@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '../../lib/utils';
-import { LayoutDashboard, Users, Calendar, LogOut } from 'lucide-react';
+import { LayoutDashboard, Users, Calendar, LogOut, Wallet, Shirt } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../ui/button';
 
@@ -44,6 +44,38 @@ export function Sidebar() {
                             </Link>
                         );
                     })}
+
+                    <div className="pt-4 pb-2">
+                        <p className="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                            Keuangan & Inventaris
+                        </p>
+                    </div>
+
+                    <Link
+                        to="/admin/bill-types"
+                        className={cn(
+                            "group flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                            location.pathname === '/admin/bill-types'
+                                ? "bg-blue-50 text-blue-700 hover:bg-blue-100"
+                                : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                        )}
+                    >
+                        <Wallet className={cn("mr-3 h-5 w-5 flex-shrink-0", location.pathname === '/admin/bill-types' ? "text-blue-600" : "text-gray-400 group-hover:text-gray-500")} />
+                        Jenis Tagihan
+                    </Link>
+
+                    <Link
+                        to="/admin/uniforms"
+                        className={cn(
+                            "group flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                            location.pathname === '/admin/uniforms'
+                                ? "bg-blue-50 text-blue-700 hover:bg-blue-100"
+                                : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                        )}
+                    >
+                        <Shirt className={cn("mr-3 h-5 w-5 flex-shrink-0", location.pathname === '/admin/uniforms' ? "text-blue-600" : "text-gray-400 group-hover:text-gray-500")} />
+                        Seragam
+                    </Link>
                 </nav>
             </div>
             <div className="border-t p-4">
