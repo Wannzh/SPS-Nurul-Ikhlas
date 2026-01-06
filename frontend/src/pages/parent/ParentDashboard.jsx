@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import api from '../../lib/axios';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
-import { Loader2, GraduationCap, BadgeCheck, Calendar, Book, Edit, CalendarDays, User, ShoppingCart, Receipt } from 'lucide-react';
+import { Loader2, GraduationCap, BadgeCheck, Calendar, Book, Edit, CalendarDays, User, ShoppingCart, Receipt, FileUp } from 'lucide-react';
 
 export default function ParentDashboard() {
     const [data, setData] = useState(null);
@@ -161,6 +161,9 @@ export default function ParentDashboard() {
                         </Button>
                         <Button variant="outline" onClick={() => window.location.href = '/parent/my-orders'}>
                             <Receipt className="mr-2 h-4 w-4" /> Pesanan Saya
+                        </Button>
+                        <Button variant="secondary" onClick={() => window.location.href = '/parent/upload-documents'}>
+                            <FileUp className="mr-2 h-4 w-4" /> Upload Dokumen
                         </Button>
                     </CardContent>
                 </Card>

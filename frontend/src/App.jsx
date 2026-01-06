@@ -32,6 +32,7 @@ import Uniforms from './pages/admin/Uniforms';
 import ParentDashboard from './pages/parent/ParentDashboard';
 import UniformOrder from './pages/parent/UniformOrder';
 import MyOrders from './pages/parent/MyOrders';
+import UploadDocuments from './pages/parent/UploadDocuments';
 
 function App() {
   return (
@@ -65,6 +66,7 @@ function App() {
           <Route path="/parent/dashboard" element={<ParentDashboard />} />
           <Route path="/parent/uniform-order" element={<UniformOrder />} />
           <Route path="/parent/my-orders" element={<MyOrders />} />
+          <Route path="/parent/upload-documents" element={<UploadDocuments />} />
         </Route>
       </Routes>
     </AuthProvider>
