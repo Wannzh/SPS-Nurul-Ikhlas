@@ -52,7 +52,12 @@ public class AuthServiceImpl implements AuthService {
         }
 
         // Validate phone number uniqueness
-        if (parentRepository.existsByHandphone(request.getPhoneNumber())) {
+        if (parentRepository.existsByHandphone(request.getFatherNumber())) {
+            throw new RuntimeException("Nomor telepon sudah terdaftar. Silakan gunakan nomor lain atau hubungi admin.");
+        }
+
+        // Validate phone number uniqueness
+        if (parentRepository.existsByHandphone(request.getMotherNumber())) {
             throw new RuntimeException("Nomor telepon sudah terdaftar. Silakan gunakan nomor lain atau hubungi admin.");
         }
 
@@ -110,7 +115,7 @@ public class AuthServiceImpl implements AuthService {
                 .relation(Relation.AYAH)
                 .name(request.getFatherName())
                 .job(request.getFatherJob())
-                .handphone(request.getPhoneNumber())
+                .handphone(request.getFatherNumber())
                 .email(request.getEmail())
                 .build();
         parentRepository.save(father);
@@ -122,6 +127,8 @@ public class AuthServiceImpl implements AuthService {
                 .relation(Relation.IBU)
                 .name(request.getMotherName())
                 .job(request.getMotherJob())
+                .handphone(request.getMotherNumber())
+                .email(request.getEmail())
                 .build();
         parentRepository.save(mother);
 

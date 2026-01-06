@@ -2,6 +2,7 @@ package com.sps.nurul_ikhlas.models.entities;
 
 import java.time.LocalDate;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.sps.nurul_ikhlas.models.enums.Relation;
 import com.sps.nurul_ikhlas.models.enums.Religion;
 
@@ -30,6 +31,7 @@ public class Parent {
 
     @ManyToOne
     @JoinColumn(name = "student_id")
+    @JsonIgnore
     private Student student;
 
     @Enumerated(EnumType.STRING)

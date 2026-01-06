@@ -14,7 +14,7 @@ export default function StudentList() {
     const fetchStudents = async () => {
         try {
             const response = await api.get('/admin/students/registered');
-            setStudents(response.data.data);
+            setStudents(response.data?.data || []);
         } catch (error) {
             console.error("Failed to fetch students", error);
         } finally {
@@ -44,8 +44,8 @@ export default function StudentList() {
     };
 
     const filteredStudents = students.filter(student =>
-        student.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        student.registrationNumber?.toLowerCase().includes(searchTerm.toLowerCase())
+        student.person?.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        student.xenditInvoiceId?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     return (
@@ -102,9 +102,9 @@ export default function StudentList() {
                                     ) : (
                                         filteredStudents.map((student) => (
                                             <tr key={student.id} className="border-b transition-colors hover:bg-gray-100/50">
-                                                <td className="p-4 align-middle font-medium">{student.registrationNumber || '-'}</td>
-                                                <td className="p-4 align-middle">{student.fullName}</td>
-                                                <td className="p-4 align-middle">{student.gender}</td>
+                                                <td className="p-4 align-middle font-medium">{student.xenditInvoiceId || '-'}</td>
+                                                <td className="p-4 align-middle">{student.person?.fullName || '-'}</td>
+                                                <td className="p-4 align-middle">{student.person?.gender || '-'}</td>
                                                 <td className="p-4 align-middle">
                                                     <div className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 ${student.status === 'VERIFIED' || student.status === 'ACCEPTED'
                                                         ? 'bg-green-100 text-green-800'

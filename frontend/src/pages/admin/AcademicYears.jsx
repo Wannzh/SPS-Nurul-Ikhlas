@@ -22,7 +22,7 @@ export default function AcademicYears() {
     const fetchAcademicYears = async () => {
         try {
             const response = await api.get('/admin/academic-years');
-            setAcademicYears(response.data.data);
+            setAcademicYears(response.data?.data || []);
         } catch (error) {
             console.error("Failed to fetch academic years", error);
         } finally {

@@ -19,13 +19,13 @@ export default function Dashboard() {
                     api.get('/admin/academic-years/active')
                 ]);
 
-                const students = studentsRes.data.data;
-                const academicYear = academicYearRes.data.data;
+                const students = studentsRes.data?.data || [];
+                const academicYear = academicYearRes.data?.data || null;
 
                 setStats({
                     totalStudents: students.length,
                     verifiedStudents: students.filter(s => s.status === 'VERIFIED' || s.status === 'ACCEPTED').length,
-                    pendingStudents: students.filter(s => s.status === 'REGISTERED' || s.status === 'PAID').length,
+                    pendingStudents: students.filter(s => s.status === 'REGISTERED').length,
                     activeAcademicYear: academicYear ? academicYear.name : 'Tidak ada'
                 });
             } catch (error) {

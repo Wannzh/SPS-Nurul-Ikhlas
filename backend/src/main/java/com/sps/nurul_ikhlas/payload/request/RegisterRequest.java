@@ -16,6 +16,8 @@ public class RegisterRequest {
     @NotBlank(message = "Nama lengkap anak wajib diisi")
     private String childFullName;
 
+    private String childNickname;
+
     @NotBlank(message = "Tempat lahir wajib diisi")
     private String birthPlace;
 
@@ -40,7 +42,10 @@ public class RegisterRequest {
     private String fatherJob;
 
     @NotBlank(message = "Nomor telepon wajib diisi")
-    private String phoneNumber;
+    private String fatherNumber;
+
+    @NotBlank(message = "Nomor telepon wajib diisi")
+    private String motherNumber;
 
     @NotBlank(message = "Email wajib diisi")
     @Email(message = "Format email tidak valid")

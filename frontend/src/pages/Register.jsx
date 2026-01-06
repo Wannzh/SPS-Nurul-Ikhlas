@@ -22,9 +22,10 @@ export default function Register() {
         // Parent Info
         fatherName: '',
         fatherJob: '',
+        fatherNumber: '',
         motherName: '',
         motherJob: '',
-        phoneNumber: '',
+        motherNumber: '',
         email: '',
         // Address
         address: '',
@@ -196,31 +197,37 @@ export default function Register() {
                                 <Input name="fatherName" id="fatherName" value={formData.fatherName} onChange={handleChange} required />
                             </div>
 
-                            <div className="space-y-2">
-                                <Label htmlFor="fatherJob">Pekerjaan Ayah</Label>
-                                <Input name="fatherJob" id="fatherJob" value={formData.fatherJob} onChange={handleChange} placeholder="Contoh: Wiraswasta" />
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="fatherJob">Pekerjaan Ayah</Label>
+                                    <Input name="fatherJob" id="fatherJob" value={formData.fatherJob} onChange={handleChange} placeholder="Contoh: Wiraswasta" />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="fatherNumber">No. WA Ayah</Label>
+                                    <Input name="fatherNumber" id="fatherNumber" value={formData.fatherNumber} onChange={handleChange} placeholder="08xxxxxxxxxx" required />
+                                </div>
                             </div>
 
-                            <div className="space-y-2">
+                            <div className="space-y-2 border-t pt-4">
                                 <Label htmlFor="motherName">Nama Ibu</Label>
                                 <Input name="motherName" id="motherName" value={formData.motherName} onChange={handleChange} required />
                             </div>
 
-                            <div className="space-y-2">
-                                <Label htmlFor="motherJob">Pekerjaan Ibu</Label>
-                                <Input name="motherJob" id="motherJob" value={formData.motherJob} onChange={handleChange} placeholder="Contoh: Ibu Rumah Tangga" />
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="motherJob">Pekerjaan Ibu</Label>
+                                    <Input name="motherJob" id="motherJob" value={formData.motherJob} onChange={handleChange} placeholder="Contoh: Ibu Rumah Tangga" />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="motherNumber">No. WA Ibu</Label>
+                                    <Input name="motherNumber" id="motherNumber" value={formData.motherNumber} onChange={handleChange} placeholder="08xxxxxxxxxx" required />
+                                </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4 border-t pt-4 mt-2">
-                                <div className="space-y-2">
-                                    <Label htmlFor="phoneNumber">No. Telepon / WA</Label>
-                                    <Input name="phoneNumber" id="phoneNumber" value={formData.phoneNumber} onChange={handleChange} placeholder="08xxxxxxxxxx" required />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="email">Email Aktif</Label>
-                                    <Input type="email" name="email" id="email" value={formData.email} onChange={handleChange} placeholder="email@contoh.com" required />
-                                    <p className="text-xs text-muted-foreground text-gray-500">Info pembayaran akan dikirim ke email ini.</p>
-                                </div>
+                            <div className="space-y-2 border-t pt-4 mt-2">
+                                <Label htmlFor="email">Email Aktif</Label>
+                                <Input type="email" name="email" id="email" value={formData.email} onChange={handleChange} placeholder="email@contoh.com" required />
+                                <p className="text-xs text-muted-foreground text-gray-500">Info pembayaran akan dikirim ke email ini.</p>
                             </div>
                         </div>
                     )}
@@ -271,7 +278,8 @@ export default function Register() {
                             <div className="bg-gray-50 p-4 rounded-md space-y-2 text-sm border">
                                 <div className="grid grid-cols-3"><span className="font-semibold">Nama Anak:</span> <span className="col-span-2">{formData.childFullName}</span></div>
                                 <div className="grid grid-cols-3"><span className="font-semibold">TTL:</span> <span className="col-span-2">{formData.birthPlace}, {formData.birthDate}</span></div>
-                                <div className="grid grid-cols-3"><span className="font-semibold">Ortu:</span> <span className="col-span-2">{formData.fatherName} / {formData.motherName}</span></div>
+                                <div className="grid grid-cols-3"><span className="font-semibold">Ayah:</span> <span className="col-span-2">{formData.fatherName} ({formData.fatherNumber})</span></div>
+                                <div className="grid grid-cols-3"><span className="font-semibold">Ibu:</span> <span className="col-span-2">{formData.motherName} ({formData.motherNumber})</span></div>
                                 <div className="grid grid-cols-3"><span className="font-semibold">Email:</span> <span className="col-span-2">{formData.email}</span></div>
                             </div>
 
