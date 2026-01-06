@@ -8,16 +8,22 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.sps.nurul_ikhlas.models.entities.AcademicYear;
+import com.sps.nurul_ikhlas.models.entities.BillType;
 import com.sps.nurul_ikhlas.models.entities.Parent;
 import com.sps.nurul_ikhlas.models.entities.Student;
+import com.sps.nurul_ikhlas.models.entities.Uniform;
 import com.sps.nurul_ikhlas.models.entities.User;
 import com.sps.nurul_ikhlas.models.enums.AcademicYearStatus;
 import com.sps.nurul_ikhlas.models.enums.Role;
 import com.sps.nurul_ikhlas.models.enums.StudentStatus;
 import com.sps.nurul_ikhlas.payload.request.AcademicYearRequest;
+import com.sps.nurul_ikhlas.payload.request.BillTypeRequest;
+import com.sps.nurul_ikhlas.payload.request.UniformRequest;
 import com.sps.nurul_ikhlas.repositories.AcademicYearRepository;
+import com.sps.nurul_ikhlas.repositories.BillTypeRepository;
 import com.sps.nurul_ikhlas.repositories.ParentRepository;
 import com.sps.nurul_ikhlas.repositories.StudentRepository;
+import com.sps.nurul_ikhlas.repositories.UniformRepository;
 import com.sps.nurul_ikhlas.repositories.UserRepository;
 import com.sps.nurul_ikhlas.services.AdminService;
 import com.sps.nurul_ikhlas.services.EmailService;
@@ -34,6 +40,8 @@ public class AdminServiceImpl implements AdminService {
     private final ParentRepository parentRepository;
     private final UserRepository userRepository;
     private final AcademicYearRepository academicYearRepository;
+    private final BillTypeRepository billTypeRepository;
+    private final UniformRepository uniformRepository;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
 
@@ -108,12 +116,10 @@ public class AdminServiceImpl implements AdminService {
     @Override
     @Transactional
     public AcademicYear createAcademicYear(AcademicYearRequest request) {
-        // Validate: if status is OPEN, fee must be provided
         if (request.getStatus() == AcademicYearStatus.OPEN) {
             if (request.getRegistrationFee() == null || request.getRegistrationFee() <= 0) {
                 throw new RuntimeException("Biaya pendaftaran wajib diisi untuk tahun ajaran yang OPEN");
             }
-            // Close any existing OPEN academic year
             academicYearRepository.findByStatus(AcademicYearStatus.OPEN)
                     .ifPresent(existing -> {
                         existing.setStatus(AcademicYearStatus.CLOSED);
@@ -141,12 +147,10 @@ public class AdminServiceImpl implements AdminService {
         AcademicYear academicYear = academicYearRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Tahun ajaran tidak ditemukan"));
 
-        // Validate: if status is being changed to OPEN, fee must be provided
         if (request.getStatus() == AcademicYearStatus.OPEN) {
             if (request.getRegistrationFee() == null || request.getRegistrationFee() <= 0) {
                 throw new RuntimeException("Biaya pendaftaran wajib diisi untuk tahun ajaran yang OPEN");
             }
-            // Close any other OPEN academic year (except this one)
             academicYearRepository.findByStatus(AcademicYearStatus.OPEN)
                     .filter(existing -> !existing.getId().equals(id))
                     .ifPresent(existing -> {
@@ -183,12 +187,119 @@ public class AdminServiceImpl implements AdminService {
         AcademicYear academicYear = academicYearRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Tahun ajaran tidak ditemukan"));
 
-        // Prevent deleting OPEN academic year
         if (academicYear.getStatus() == AcademicYearStatus.OPEN) {
             throw new RuntimeException("Tidak dapat menghapus tahun ajaran yang sedang aktif");
         }
 
         academicYearRepository.delete(academicYear);
         log.info("Deleted academic year: {}", academicYear.getName());
+    }
+
+    // =========================================
+    // BILL TYPE CRUD
+    // =========================================
+
+    @Override
+    @Transactional
+    public BillType createBillType(BillTypeRequest request) {
+        BillType billType = BillType.builder()
+                .name(request.getName())
+                .amount(request.getAmount())
+                .period(request.getPeriod())
+                .description(request.getDescription())
+                .build();
+
+        billTypeRepository.save(billType);
+        log.info("Created bill type: {} with amount: {}", billType.getName(), billType.getAmount());
+
+        return billType;
+    }
+
+    @Override
+    @Transactional
+    public BillType updateBillType(String id, BillTypeRequest request) {
+        BillType billType = billTypeRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Jenis tagihan tidak ditemukan"));
+
+        billType.setName(request.getName());
+        billType.setAmount(request.getAmount());
+        billType.setPeriod(request.getPeriod());
+        billType.setDescription(request.getDescription());
+
+        billTypeRepository.save(billType);
+        log.info("Updated bill type: {} with amount: {}", billType.getName(), billType.getAmount());
+
+        return billType;
+    }
+
+    @Override
+    public List<BillType> getAllBillTypes() {
+        return billTypeRepository.findAll();
+    }
+
+    @Override
+    @Transactional
+    public void deleteBillType(String id) {
+        BillType billType = billTypeRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Jenis tagihan tidak ditemukan"));
+
+        billTypeRepository.delete(billType);
+        log.info("Deleted bill type: {}", billType.getName());
+    }
+
+    // =========================================
+    // UNIFORM CRUD
+    // =========================================
+
+    @Override
+    @Transactional
+    public Uniform createUniform(UniformRequest request) {
+        Uniform uniform = Uniform.builder()
+                .name(request.getName())
+                .size(request.getSize())
+                .price(request.getPrice())
+                .stock(request.getStock())
+                .description(request.getDescription())
+                .build();
+
+        uniformRepository.save(uniform);
+        log.info("Created uniform: {} size {} with price: {}", uniform.getName(), uniform.getSize(),
+                uniform.getPrice());
+
+        return uniform;
+    }
+
+    @Override
+    @Transactional
+    public Uniform updateUniform(String id, UniformRequest request) {
+        Uniform uniform = uniformRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Seragam tidak ditemukan"));
+
+        uniform.setName(request.getName());
+        uniform.setSize(request.getSize());
+        uniform.setPrice(request.getPrice());
+        uniform.setStock(request.getStock());
+        uniform.setDescription(request.getDescription());
+
+        uniformRepository.save(uniform);
+        log.info("Updated uniform: {} size {} with price: {}", uniform.getName(), uniform.getSize(),
+                uniform.getPrice());
+
+        return uniform;
+    }
+
+    @Override
+    public List<Uniform> getAllUniforms() {
+        return uniformRepository.findAll();
+    }
+
+    @Override
+    @Transactional
+    public void deleteUniform(String id) {
+        Uniform uniform = uniformRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Seragam tidak ditemukan"));
+
+        uniformRepository.delete(uniform);
+        log.info("Deleted uniform: {} size {}", uniform.getName(), uniform.getSize());
     }
 }
