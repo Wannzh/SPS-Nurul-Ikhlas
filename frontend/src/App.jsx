@@ -30,6 +30,7 @@ import AcademicYears from './pages/admin/AcademicYears';
 import BillTypes from './pages/admin/BillTypes';
 import Uniforms from './pages/admin/Uniforms';
 import ParentDashboard from './pages/parent/ParentDashboard';
+import UniformOrder from './pages/parent/UniformOrder';
 
 function App() {
   return (
@@ -52,7 +53,6 @@ function App() {
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<Dashboard />} />
             <Route path="students" element={<StudentList />} />
-            <Route path="students" element={<StudentList />} />
             <Route path="academic-years" element={<AcademicYears />} />
             <Route path="bill-types" element={<BillTypes />} />
             <Route path="uniforms" element={<Uniforms />} />
@@ -62,6 +62,7 @@ function App() {
         {/* Protected Parent Routes */}
         <Route element={<ProtectedRoute allowedRoles={['ORTU']} />}>
           <Route path="/parent/dashboard" element={<ParentDashboard />} />
+          <Route path="/parent/uniform-order" element={<UniformOrder />} />
         </Route>
       </Routes>
     </AuthProvider>
