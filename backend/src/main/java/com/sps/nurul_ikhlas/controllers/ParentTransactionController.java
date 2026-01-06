@@ -11,10 +11,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.sps.nurul_ikhlas.models.entities.PaymentTransaction;
 import com.sps.nurul_ikhlas.models.entities.Uniform;
 import com.sps.nurul_ikhlas.models.entities.UniformOrder;
 import com.sps.nurul_ikhlas.payload.ApiResponse;
 import com.sps.nurul_ikhlas.payload.request.CreateUniformOrderRequest;
+import com.sps.nurul_ikhlas.payload.request.PaymentRequest;
+import com.sps.nurul_ikhlas.services.PaymentService;
 import com.sps.nurul_ikhlas.services.StudentTransactionService;
 
 import jakarta.validation.Valid;
@@ -27,6 +30,7 @@ import lombok.RequiredArgsConstructor;
 public class ParentTransactionController {
 
     private final StudentTransactionService transactionService;
+    private final PaymentService paymentService;
 
     @GetMapping("/uniforms")
     public ResponseEntity<ApiResponse<List<Uniform>>> getAvailableUniforms() {
@@ -46,5 +50,20 @@ public class ParentTransactionController {
     public ResponseEntity<ApiResponse<List<UniformOrder>>> getMyUniformOrders(Principal principal) {
         List<UniformOrder> orders = transactionService.getMyUniformOrders(principal.getName());
         return ResponseEntity.ok(ApiResponse.success("Riwayat pesanan seragam", orders));
+    }
+
+    // Payment Endpoints
+    @PostMapping("/payments/create")
+    public ResponseEntity<ApiResponse<PaymentTransaction>> createPayment(
+            Principal principal,
+            @Valid @RequestBody PaymentRequest request) throws Exception {
+        PaymentTransaction transaction = paymentService.createPayment(principal.getName(), request);
+        return ResponseEntity.ok(ApiResponse.success("Invoice pembayaran berhasil dibuat", transaction));
+    }
+
+    @GetMapping("/payments/history")
+    public ResponseEntity<ApiResponse<List<PaymentTransaction>>> getPaymentHistory(Principal principal) {
+        List<PaymentTransaction> transactions = paymentService.getPaymentHistory(principal.getName());
+        return ResponseEntity.ok(ApiResponse.success("Riwayat transaksi", transactions));
     }
 }
