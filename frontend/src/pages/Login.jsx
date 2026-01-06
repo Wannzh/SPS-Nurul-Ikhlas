@@ -29,8 +29,10 @@ export default function Login() {
         if (result.success) {
             if (result.data?.role === 'ADMIN') {
                 navigate('/admin');
+            } else if (result.data?.role === 'ORTU') {
+                navigate('/parent/dashboard');
             } else {
-                // Default redirect or based on role
+                // Default redirect
                 navigate('/');
             }
         } else {
