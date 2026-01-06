@@ -77,4 +77,14 @@ public class Student {
 
     @Column(name = "payment_status")
     private String paymentStatus;
+
+    // Document fields
+    @Column(name = "doc_kk_path")
+    private String docKkPath;
+
+    @Column(name = "doc_akta_path")
+    private String docAktaPath;
+
+    @Column(name = "doc_ktp_path")
+    private String docKtpPath;
 }
