@@ -29,6 +29,8 @@ import StudentList from './pages/admin/StudentList';
 import AcademicYears from './pages/admin/AcademicYears';
 import BillTypes from './pages/admin/BillTypes';
 import Uniforms from './pages/admin/Uniforms';
+import UniformOrders from './pages/admin/UniformOrders';
+import ArrearsReport from './pages/admin/ArrearsReport';
 import ParentDashboard from './pages/parent/ParentDashboard';
 import UniformOrder from './pages/parent/UniformOrder';
 import MyOrders from './pages/parent/MyOrders';
@@ -58,6 +60,8 @@ function App() {
             <Route path="academic-years" element={<AcademicYears />} />
             <Route path="bill-types" element={<BillTypes />} />
             <Route path="uniforms" element={<Uniforms />} />
+            <Route path="uniform-orders" element={<UniformOrders />} />
+            <Route path="arrears" element={<ArrearsReport />} />
           </Route>
         </Route>
 

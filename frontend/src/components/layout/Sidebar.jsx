@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '../../lib/utils';
-import { LayoutDashboard, Users, Calendar, LogOut, Wallet, Shirt } from 'lucide-react';
+import { LayoutDashboard, Users, Calendar, LogOut, Wallet, Shirt, Truck, TrendingDown } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../ui/button';
 
@@ -13,6 +13,18 @@ const navigation = [
 export function Sidebar() {
     const location = useLocation();
     const { logout } = useAuth();
+
+    const getLinkClass = (path) => cn(
+        "group flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors",
+        location.pathname === path
+            ? "bg-blue-50 text-blue-700 hover:bg-blue-100"
+            : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+    );
+
+    const getIconClass = (path) => cn(
+        "mr-3 h-5 w-5 flex-shrink-0",
+        location.pathname === path ? "text-blue-600" : "text-gray-400 group-hover:text-gray-500"
+    );
 
     return (
         <div className="flex h-full w-64 flex-col border-r bg-white">
@@ -51,30 +63,24 @@ export function Sidebar() {
                         </p>
                     </div>
 
-                    <Link
-                        to="/admin/bill-types"
-                        className={cn(
-                            "group flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                            location.pathname === '/admin/bill-types'
-                                ? "bg-blue-50 text-blue-700 hover:bg-blue-100"
-                                : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
-                        )}
-                    >
-                        <Wallet className={cn("mr-3 h-5 w-5 flex-shrink-0", location.pathname === '/admin/bill-types' ? "text-blue-600" : "text-gray-400 group-hover:text-gray-500")} />
+                    <Link to="/admin/bill-types" className={getLinkClass('/admin/bill-types')}>
+                        <Wallet className={getIconClass('/admin/bill-types')} />
                         Jenis Tagihan
                     </Link>
 
-                    <Link
-                        to="/admin/uniforms"
-                        className={cn(
-                            "group flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                            location.pathname === '/admin/uniforms'
-                                ? "bg-blue-50 text-blue-700 hover:bg-blue-100"
-                                : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
-                        )}
-                    >
-                        <Shirt className={cn("mr-3 h-5 w-5 flex-shrink-0", location.pathname === '/admin/uniforms' ? "text-blue-600" : "text-gray-400 group-hover:text-gray-500")} />
-                        Seragam
+                    <Link to="/admin/arrears" className={getLinkClass('/admin/arrears')}>
+                        <TrendingDown className={getIconClass('/admin/arrears')} />
+                        Laporan Tunggakan
+                    </Link>
+
+                    <Link to="/admin/uniforms" className={getLinkClass('/admin/uniforms')}>
+                        <Shirt className={getIconClass('/admin/uniforms')} />
+                        Master Seragam
+                    </Link>
+
+                    <Link to="/admin/uniform-orders" className={getLinkClass('/admin/uniform-orders')}>
+                        <Truck className={getIconClass('/admin/uniform-orders')} />
+                        Pesanan Seragam
                     </Link>
                 </nav>
             </div>
