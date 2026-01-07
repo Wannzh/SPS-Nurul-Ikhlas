@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.sps.nurul_ikhlas.models.enums.OrderStatus;
 import com.sps.nurul_ikhlas.models.enums.PaymentStatus;
 
 import jakarta.persistence.CascadeType;
@@ -53,6 +54,11 @@ public class UniformOrder {
     @Column(name = "payment_status", nullable = false)
     @Builder.Default
     private PaymentStatus paymentStatus = PaymentStatus.UNPAID;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "order_status", nullable = false)
+    @Builder.Default
+    private OrderStatus orderStatus = OrderStatus.PENDING;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
