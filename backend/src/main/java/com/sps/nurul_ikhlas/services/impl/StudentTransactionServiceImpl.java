@@ -18,11 +18,13 @@ import com.sps.nurul_ikhlas.models.entities.Uniform;
 import com.sps.nurul_ikhlas.models.entities.UniformOrder;
 import com.sps.nurul_ikhlas.models.entities.UniformOrderItem;
 import com.sps.nurul_ikhlas.models.entities.User;
+import com.sps.nurul_ikhlas.models.enums.BillCategory;
 import com.sps.nurul_ikhlas.models.enums.PaymentStatus;
 import com.sps.nurul_ikhlas.models.enums.PaymentType;
 import com.sps.nurul_ikhlas.models.enums.Period;
 import com.sps.nurul_ikhlas.models.enums.TransactionStatus;
 import com.sps.nurul_ikhlas.payload.request.CreateUniformOrderRequest;
+import com.sps.nurul_ikhlas.payload.response.MonthlyStatusResponse;
 import com.sps.nurul_ikhlas.payload.response.SppInfoResponse;
 import com.sps.nurul_ikhlas.repositories.BillTypeRepository;
 import com.sps.nurul_ikhlas.repositories.PaymentTransactionRepository;
@@ -234,6 +236,121 @@ public class StudentTransactionServiceImpl implements StudentTransactionService 
                 return paymentTransactionRepository.findByStudentIdOrderByCreatedAtDesc(student.getId())
                                 .stream()
                                 .filter(t -> t.getPaymentType() == PaymentType.SPP)
+                                .toList();
+        }
+
+        // Monthly Infaq/Kas Methods
+        @Override
+        public MonthlyStatusResponse getMonthlyStatus(String parentUsername) {
+                Student student = getStudentFromUsername(parentUsername);
+
+                // Get Infaq and Kas bill types
+                BillType infaqBill = billTypeRepository.findByCategory(BillCategory.INFAQ).orElse(null);
+                BillType kasBill = billTypeRepository.findByCategory(BillCategory.KAS).orElse(null);
+
+                int totalMonthsActive = 0;
+                if (student.getRegisterDate() != null) {
+                        totalMonthsActive = (int) ChronoUnit.MONTHS.between(
+                                        student.getRegisterDate().withDayOfMonth(1),
+                                        LocalDate.now().withDayOfMonth(1)) + 1;
+                }
+
+                // Calculate Infaq status
+                Double infaqFee = infaqBill != null ? infaqBill.getAmount() : 0.0;
+                int infaqPaid = countMonthsPaid(student.getId(), PaymentType.INFAQ, infaqFee);
+                int infaqUnpaid = Math.max(0, totalMonthsActive - infaqPaid);
+                boolean infaqIsDue = infaqPaid < totalMonthsActive;
+                boolean infaqIsCritical = infaqUnpaid >= 3;
+
+                // Calculate Kas status
+                Double kasFee = kasBill != null ? kasBill.getAmount() : 0.0;
+                int kasPaid = countMonthsPaid(student.getId(), PaymentType.KAS, kasFee);
+                int kasUnpaid = Math.max(0, totalMonthsActive - kasPaid);
+                boolean kasIsDue = kasPaid < totalMonthsActive;
+                boolean kasIsCritical = kasUnpaid >= 3;
+
+                return MonthlyStatusResponse.builder()
+                                .infaqMonthlyFee(infaqFee)
+                                .infaqMonthsPaid(infaqPaid)
+                                .infaqMonthsUnpaid(infaqUnpaid)
+                                .infaqTotalArrears(infaqUnpaid * infaqFee)
+                                .infaqIsDue(infaqIsDue)
+                                .infaqIsCritical(infaqIsCritical)
+                                .kasMonthlyFee(kasFee)
+                                .kasMonthsPaid(kasPaid)
+                                .kasMonthsUnpaid(kasUnpaid)
+                                .kasTotalArrears(kasUnpaid * kasFee)
+                                .kasIsDue(kasIsDue)
+                                .kasIsCritical(kasIsCritical)
+                                .totalMonthsActive(totalMonthsActive)
+                                .build();
+        }
+
+        private int countMonthsPaid(String studentId, PaymentType type, Double monthlyFee) {
+                if (monthlyFee == null || monthlyFee <= 0)
+                        return 0;
+
+                Double totalPaid = paymentTransactionRepository.findByStudentIdOrderByCreatedAtDesc(studentId)
+                                .stream()
+                                .filter(t -> t.getPaymentType() == type && t.getStatus() == TransactionStatus.PAID)
+                                .mapToDouble(PaymentTransaction::getAmount)
+                                .sum();
+
+                return (int) Math.floor(totalPaid / monthlyFee);
+        }
+
+        @Override
+        @Transactional
+        public PaymentTransaction createMonthlyPayment(String parentUsername, BillCategory category, Integer months)
+                        throws Exception {
+                Student student = getStudentFromUsername(parentUsername);
+
+                BillType billType = billTypeRepository.findByCategory(category)
+                                .orElseThrow(() -> new RuntimeException("Biaya " + category + " belum dikonfigurasi"));
+
+                PaymentType paymentType = category == BillCategory.INFAQ ? PaymentType.INFAQ : PaymentType.KAS;
+                String categoryName = category == BillCategory.INFAQ ? "Infaq" : "Kas";
+
+                Double amount = billType.getAmount() * months;
+                String description = "Pembayaran " + categoryName + " " + months + " bulan - "
+                                + student.getPerson().getFullName();
+                String externalId = categoryName.toUpperCase() + "-" + student.getId() + "-"
+                                + System.currentTimeMillis();
+
+                Map<String, Object> params = new HashMap<>();
+                params.put("external_id", externalId);
+                params.put("amount", amount);
+                params.put("description", description);
+                params.put("invoice_duration", 86400);
+                params.put("success_redirect_url", successRedirectUrl);
+                params.put("failure_redirect_url", failureRedirectUrl);
+
+                Invoice invoice = Invoice.create(params);
+                log.info("Created {} invoice: {} for {} months, amount: {}", categoryName, invoice.getId(), months,
+                                amount);
+
+                PaymentTransaction transaction = PaymentTransaction.builder()
+                                .student(student)
+                                .paymentType(paymentType)
+                                .amount(amount)
+                                .xenditInvoiceId(invoice.getId())
+                                .xenditPaymentUrl(invoice.getInvoiceUrl())
+                                .status(TransactionStatus.PENDING)
+                                .createdAt(LocalDateTime.now())
+                                .build();
+
+                paymentTransactionRepository.save(transaction);
+                return transaction;
+        }
+
+        @Override
+        public List<PaymentTransaction> getMonthlyPaymentHistory(String parentUsername, BillCategory category) {
+                Student student = getStudentFromUsername(parentUsername);
+                PaymentType type = category == BillCategory.INFAQ ? PaymentType.INFAQ : PaymentType.KAS;
+
+                return paymentTransactionRepository.findByStudentIdOrderByCreatedAtDesc(student.getId())
+                                .stream()
+                                .filter(t -> t.getPaymentType() == type)
                                 .toList();
         }
 }

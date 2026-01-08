@@ -202,10 +202,16 @@ public class AdminServiceImpl implements AdminService {
     @Override
     @Transactional
     public BillType createBillType(BillTypeRequest request) {
+        // Derive name from category
+        String name = request.getCategory() == com.sps.nurul_ikhlas.models.enums.BillCategory.INFAQ
+                ? "Uang Infaq"
+                : "Uang Kas";
+
         BillType billType = BillType.builder()
-                .name(request.getName())
+                .name(name)
                 .amount(request.getAmount())
-                .period(request.getPeriod())
+                .period(com.sps.nurul_ikhlas.models.enums.Period.MONTHLY) // Always monthly
+                .category(request.getCategory())
                 .description(request.getDescription())
                 .build();
 
@@ -221,9 +227,15 @@ public class AdminServiceImpl implements AdminService {
         BillType billType = billTypeRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Jenis tagihan tidak ditemukan"));
 
-        billType.setName(request.getName());
+        // Derive name from category
+        String name = request.getCategory() == com.sps.nurul_ikhlas.models.enums.BillCategory.INFAQ
+                ? "Uang Infaq"
+                : "Uang Kas";
+
+        billType.setName(name);
         billType.setAmount(request.getAmount());
-        billType.setPeriod(request.getPeriod());
+        billType.setPeriod(com.sps.nurul_ikhlas.models.enums.Period.MONTHLY);
+        billType.setCategory(request.getCategory());
         billType.setDescription(request.getDescription());
 
         billTypeRepository.save(billType);

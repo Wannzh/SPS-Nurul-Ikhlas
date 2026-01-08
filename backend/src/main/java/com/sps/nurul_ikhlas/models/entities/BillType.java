@@ -1,5 +1,6 @@
 package com.sps.nurul_ikhlas.models.entities;
 
+import com.sps.nurul_ikhlas.models.enums.BillCategory;
 import com.sps.nurul_ikhlas.models.enums.Period;
 
 import jakarta.persistence.Column;
@@ -34,7 +35,12 @@ public class BillType {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Period period;
+    @Builder.Default
+    private Period period = Period.MONTHLY;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private BillCategory category;
 
     private String description;
 }

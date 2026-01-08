@@ -9,15 +9,19 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.sps.nurul_ikhlas.models.entities.PaymentTransaction;
 import com.sps.nurul_ikhlas.models.entities.Uniform;
 import com.sps.nurul_ikhlas.models.entities.UniformOrder;
+import com.sps.nurul_ikhlas.models.enums.BillCategory;
 import com.sps.nurul_ikhlas.payload.ApiResponse;
 import com.sps.nurul_ikhlas.payload.request.CreateUniformOrderRequest;
+import com.sps.nurul_ikhlas.payload.request.MonthlyPaymentRequest;
 import com.sps.nurul_ikhlas.payload.request.PaymentRequest;
 import com.sps.nurul_ikhlas.payload.request.SppPaymentRequest;
+import com.sps.nurul_ikhlas.payload.response.MonthlyStatusResponse;
 import com.sps.nurul_ikhlas.payload.response.SppInfoResponse;
 import com.sps.nurul_ikhlas.services.PaymentService;
 import com.sps.nurul_ikhlas.services.StudentTransactionService;
@@ -69,7 +73,7 @@ public class ParentTransactionController {
         return ResponseEntity.ok(ApiResponse.success("Riwayat transaksi", transactions));
     }
 
-    // SPP Endpoints
+    // SPP Endpoints (Legacy)
     @GetMapping("/finance/spp-info")
     public ResponseEntity<ApiResponse<SppInfoResponse>> getSppInfo(Principal principal) {
         SppInfoResponse info = transactionService.getSppInfo(principal.getName());
@@ -88,5 +92,30 @@ public class ParentTransactionController {
     public ResponseEntity<ApiResponse<List<PaymentTransaction>>> getSppHistory(Principal principal) {
         List<PaymentTransaction> transactions = transactionService.getSppHistory(principal.getName());
         return ResponseEntity.ok(ApiResponse.success("Riwayat pembayaran SPP", transactions));
+    }
+
+    // Monthly Infaq/Kas Endpoints (New)
+    @GetMapping("/finance/monthly-status")
+    public ResponseEntity<ApiResponse<MonthlyStatusResponse>> getMonthlyStatus(Principal principal) {
+        MonthlyStatusResponse status = transactionService.getMonthlyStatus(principal.getName());
+        return ResponseEntity.ok(ApiResponse.success("Status tagihan bulanan", status));
+    }
+
+    @PostMapping("/payments/monthly")
+    public ResponseEntity<ApiResponse<PaymentTransaction>> createMonthlyPayment(
+            Principal principal,
+            @Valid @RequestBody MonthlyPaymentRequest request) throws Exception {
+        PaymentTransaction transaction = transactionService.createMonthlyPayment(
+                principal.getName(), request.getBillCategory(), request.getNumberOfMonths());
+        return ResponseEntity.ok(ApiResponse.success("Invoice tagihan bulanan berhasil dibuat", transaction));
+    }
+
+    @GetMapping("/payments/monthly-history")
+    public ResponseEntity<ApiResponse<List<PaymentTransaction>>> getMonthlyHistory(
+            Principal principal,
+            @RequestParam BillCategory category) {
+        List<PaymentTransaction> transactions = transactionService.getMonthlyPaymentHistory(principal.getName(),
+                category);
+        return ResponseEntity.ok(ApiResponse.success("Riwayat pembayaran " + category, transactions));
     }
 }
