@@ -19,8 +19,10 @@ import com.sps.nurul_ikhlas.models.enums.BillCategory;
 import com.sps.nurul_ikhlas.payload.ApiResponse;
 import com.sps.nurul_ikhlas.payload.request.CreateUniformOrderRequest;
 import com.sps.nurul_ikhlas.payload.request.MonthlyPaymentRequest;
+import com.sps.nurul_ikhlas.payload.request.PayBillRequest;
 import com.sps.nurul_ikhlas.payload.request.PaymentRequest;
 import com.sps.nurul_ikhlas.payload.request.SppPaymentRequest;
+import com.sps.nurul_ikhlas.payload.response.MonthlyBillDetailResponse;
 import com.sps.nurul_ikhlas.payload.response.MonthlyStatusResponse;
 import com.sps.nurul_ikhlas.payload.response.SppInfoResponse;
 import com.sps.nurul_ikhlas.services.PaymentService;
@@ -117,5 +119,20 @@ public class ParentTransactionController {
         List<PaymentTransaction> transactions = transactionService.getMonthlyPaymentHistory(principal.getName(),
                 category);
         return ResponseEntity.ok(ApiResponse.success("Riwayat pembayaran " + category, transactions));
+    }
+
+    // Monthly Bill Details (New - with per-month status)
+    @GetMapping("/finance/monthly-details")
+    public ResponseEntity<ApiResponse<MonthlyBillDetailResponse>> getMonthlyDetails(Principal principal) {
+        MonthlyBillDetailResponse details = transactionService.getMonthlyBillDetails(principal.getName());
+        return ResponseEntity.ok(ApiResponse.success("Detail tagihan bulanan", details));
+    }
+
+    @PostMapping("/payments/pay-bills")
+    public ResponseEntity<ApiResponse<PaymentTransaction>> paySelectedBills(
+            Principal principal,
+            @Valid @RequestBody PayBillRequest request) throws Exception {
+        PaymentTransaction transaction = transactionService.paySelectedBills(principal.getName(), request);
+        return ResponseEntity.ok(ApiResponse.success("Invoice berhasil dibuat", transaction));
     }
 }

@@ -24,6 +24,8 @@ import com.sps.nurul_ikhlas.models.enums.PaymentType;
 import com.sps.nurul_ikhlas.models.enums.Period;
 import com.sps.nurul_ikhlas.models.enums.TransactionStatus;
 import com.sps.nurul_ikhlas.payload.request.CreateUniformOrderRequest;
+import com.sps.nurul_ikhlas.payload.request.PayBillRequest;
+import com.sps.nurul_ikhlas.payload.response.MonthlyBillDetailResponse;
 import com.sps.nurul_ikhlas.payload.response.MonthlyStatusResponse;
 import com.sps.nurul_ikhlas.payload.response.SppInfoResponse;
 import com.sps.nurul_ikhlas.repositories.BillTypeRepository;
@@ -352,5 +354,182 @@ public class StudentTransactionServiceImpl implements StudentTransactionService 
                                 .stream()
                                 .filter(t -> t.getPaymentType() == type)
                                 .toList();
+        }
+
+        // ===== NEW: Detailed Monthly Bill Methods =====
+
+        @Override
+        public MonthlyBillDetailResponse getMonthlyBillDetails(String parentUsername) {
+                Student student = getStudentFromUsername(parentUsername);
+
+                BillType infaqBill = billTypeRepository.findByCategory(BillCategory.INFAQ).orElse(null);
+                BillType kasBill = billTypeRepository.findByCategory(BillCategory.KAS).orElse(null);
+
+                Double infaqFee = infaqBill != null ? infaqBill.getAmount() : 0.0;
+                Double kasFee = kasBill != null ? kasBill.getAmount() : 0.0;
+
+                // Get start date (registration date or default to 6 months ago)
+                LocalDate startDate = student.getRegisterDate() != null
+                                ? student.getRegisterDate().withDayOfMonth(1)
+                                : LocalDate.now().minusMonths(6).withDayOfMonth(1);
+                LocalDate currentMonth = LocalDate.now().withDayOfMonth(1);
+
+                // Get all paid transactions for this student
+                List<PaymentTransaction> allTransactions = paymentTransactionRepository
+                                .findByStudentIdOrderByCreatedAtDesc(student.getId())
+                                .stream()
+                                .filter(t -> t.getStatus() == TransactionStatus.PAID)
+                                .toList();
+
+                // Build month items for Infaq and Kas
+                List<MonthlyBillDetailResponse.MonthlyBillItem> infaqItems = new java.util.ArrayList<>();
+                List<MonthlyBillDetailResponse.MonthlyBillItem> kasItems = new java.util.ArrayList<>();
+
+                LocalDate month = startDate;
+                while (!month.isAfter(currentMonth)) {
+                        String monthKey = month.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM"));
+                        String monthLabel = month.format(java.time.format.DateTimeFormatter.ofPattern("MMMM yyyy",
+                                        new java.util.Locale("id", "ID")));
+
+                        // Check Infaq payment for this month
+                        if (infaqBill != null) {
+                                PaymentTransaction infaqPaid = findPaidTransactionForMonth(allTransactions,
+                                                PaymentType.INFAQ, month, infaqFee);
+                                String infaqStatus = determineStatus(month, currentMonth, infaqPaid != null);
+
+                                infaqItems.add(MonthlyBillDetailResponse.MonthlyBillItem.builder()
+                                                .month(monthKey)
+                                                .monthLabel(monthLabel)
+                                                .status(infaqStatus)
+                                                .amount(infaqFee)
+                                                .paidAt(infaqPaid != null ? infaqPaid.getCreatedAt().toString() : null)
+                                                .transactionId(infaqPaid != null ? infaqPaid.getId() : null)
+                                                .build());
+                        }
+
+                        // Check Kas payment for this month
+                        if (kasBill != null) {
+                                PaymentTransaction kasPaid = findPaidTransactionForMonth(allTransactions,
+                                                PaymentType.KAS, month, kasFee);
+                                String kasStatus = determineStatus(month, currentMonth, kasPaid != null);
+
+                                kasItems.add(MonthlyBillDetailResponse.MonthlyBillItem.builder()
+                                                .month(monthKey)
+                                                .monthLabel(monthLabel)
+                                                .status(kasStatus)
+                                                .amount(kasFee)
+                                                .paidAt(kasPaid != null ? kasPaid.getCreatedAt().toString() : null)
+                                                .transactionId(kasPaid != null ? kasPaid.getId() : null)
+                                                .build());
+                        }
+
+                        month = month.plusMonths(1);
+                }
+
+                return MonthlyBillDetailResponse.builder()
+                                .infaqItems(infaqItems)
+                                .kasItems(kasItems)
+                                .infaqMonthlyFee(infaqFee)
+                                .kasMonthlyFee(kasFee)
+                                .build();
+        }
+
+        private PaymentTransaction findPaidTransactionForMonth(List<PaymentTransaction> transactions, PaymentType type,
+                        LocalDate month, Double monthlyFee) {
+                // Count how many months of this type have been paid
+                double totalPaid = transactions.stream()
+                                .filter(t -> t.getPaymentType() == type)
+                                .mapToDouble(PaymentTransaction::getAmount)
+                                .sum();
+
+                int monthsPaid = (int) Math.floor(totalPaid / monthlyFee);
+
+                // Simple sequential logic: first N months are paid
+                LocalDate firstMonth = transactions.stream()
+                                .filter(t -> t.getPaymentType() == type)
+                                .map(t -> t.getCreatedAt().toLocalDate().withDayOfMonth(1))
+                                .min(LocalDate::compareTo)
+                                .orElse(month);
+
+                long monthIndex = ChronoUnit.MONTHS.between(firstMonth, month);
+
+                if (monthIndex < monthsPaid) {
+                        return transactions.stream()
+                                        .filter(t -> t.getPaymentType() == type)
+                                        .findFirst()
+                                        .orElse(null);
+                }
+                return null;
+        }
+
+        private String determineStatus(LocalDate month, LocalDate currentMonth, boolean isPaid) {
+                if (isPaid) {
+                        return "PAID";
+                }
+                if (month.isBefore(currentMonth)) {
+                        return "ARREARS";
+                }
+                return "DUE";
+        }
+
+        @Override
+        @Transactional
+        public PaymentTransaction paySelectedBills(String parentUsername, PayBillRequest request) throws Exception {
+                Student student = getStudentFromUsername(parentUsername);
+
+                BillType infaqBill = billTypeRepository.findByCategory(BillCategory.INFAQ).orElse(null);
+                BillType kasBill = billTypeRepository.findByCategory(BillCategory.KAS).orElse(null);
+
+                double totalAmount = 0;
+                StringBuilder description = new StringBuilder("Pembayaran: ");
+                int infaqCount = 0, kasCount = 0;
+
+                for (PayBillRequest.BillItem item : request.getItems()) {
+                        if ("INFAQ".equals(item.getCategory()) && infaqBill != null) {
+                                totalAmount += infaqBill.getAmount();
+                                infaqCount++;
+                        } else if ("KAS".equals(item.getCategory()) && kasBill != null) {
+                                totalAmount += kasBill.getAmount();
+                                kasCount++;
+                        }
+                }
+
+                if (infaqCount > 0) {
+                        description.append("Infaq ").append(infaqCount).append(" bln, ");
+                }
+                if (kasCount > 0) {
+                        description.append("Kas ").append(kasCount).append(" bln");
+                }
+                description.append(" - ").append(student.getPerson().getFullName());
+
+                String externalId = "MONTHLY-" + student.getId() + "-" + System.currentTimeMillis();
+
+                Map<String, Object> params = new HashMap<>();
+                params.put("external_id", externalId);
+                params.put("amount", totalAmount);
+                params.put("description", description.toString());
+                params.put("invoice_duration", 86400);
+                params.put("success_redirect_url", successRedirectUrl);
+                params.put("failure_redirect_url", failureRedirectUrl);
+
+                Invoice invoice = Invoice.create(params);
+                log.info("Created monthly invoice: {} for Infaq={}, Kas={}, total={}", invoice.getId(), infaqCount,
+                                kasCount, totalAmount);
+
+                // Determine payment type (use first category or INFAQ as default)
+                PaymentType paymentType = infaqCount > 0 ? PaymentType.INFAQ : PaymentType.KAS;
+
+                PaymentTransaction transaction = PaymentTransaction.builder()
+                                .student(student)
+                                .paymentType(paymentType)
+                                .amount(totalAmount)
+                                .xenditInvoiceId(invoice.getId())
+                                .xenditPaymentUrl(invoice.getInvoiceUrl())
+                                .status(TransactionStatus.PENDING)
+                                .createdAt(LocalDateTime.now())
+                                .build();
+
+                paymentTransactionRepository.save(transaction);
+                return transaction;
         }
 }
