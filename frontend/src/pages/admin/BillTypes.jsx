@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../../lib/axios';
 import { Button } from '../../components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Select } from '../../components/ui/select';
@@ -14,9 +14,8 @@ export default function BillTypes() {
     const [editingId, setEditingId] = useState(null);
 
     const [formData, setFormData] = useState({
-        name: '',
+        category: 'INFAQ',
         amount: 0,
-        period: 'MONTHLY',
         description: ''
     });
 
@@ -39,17 +38,15 @@ export default function BillTypes() {
         if (billType) {
             setEditingId(billType.id);
             setFormData({
-                name: billType.name,
+                category: billType.category || 'INFAQ',
                 amount: billType.amount,
-                period: billType.period,
                 description: billType.description || ''
             });
         } else {
             setEditingId(null);
             setFormData({
-                name: '',
+                category: 'INFAQ',
                 amount: 0,
-                period: 'MONTHLY',
                 description: ''
             });
         }
@@ -96,12 +93,25 @@ export default function BillTypes() {
         }).format(amount);
     };
 
+    const getCategoryBadge = (category) => {
+        const styles = {
+            INFAQ: 'bg-green-100 text-green-800',
+            KAS: 'bg-purple-100 text-purple-800'
+        };
+        const labels = { INFAQ: 'Infaq', KAS: 'Kas' };
+        return (
+            <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${styles[category] || 'bg-gray-100'}`}>
+                {labels[category] || category}
+            </span>
+        );
+    };
+
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">Jenis Tagihan</h1>
-                    <p className="text-gray-500">Kelola jenis-jenis pembayaran siswa.</p>
+                    <p className="text-gray-500">Kelola tagihan Infaq & Kas bulanan.</p>
                 </div>
                 <Button onClick={() => handleOpenModal()}>
                     <Plus className="mr-2 h-4 w-4" />
@@ -113,7 +123,7 @@ export default function BillTypes() {
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                         <Wallet className="h-5 w-5" />
-                        Daftar Tagihan
+                        Daftar Tagihan Bulanan
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -125,8 +135,8 @@ export default function BillTypes() {
                                 <thead className="[&_tr]:border-b">
                                     <tr className="border-b">
                                         <th className="h-12 px-4 font-medium">Nama Tagihan</th>
+                                        <th className="h-12 px-4 font-medium">Kategori</th>
                                         <th className="h-12 px-4 font-medium">Jumlah</th>
-                                        <th className="h-12 px-4 font-medium">Periode</th>
                                         <th className="h-12 px-4 font-medium">Deskripsi</th>
                                         <th className="h-12 px-4 font-medium text-right">Aksi</th>
                                     </tr>
@@ -135,13 +145,8 @@ export default function BillTypes() {
                                     {billTypes.length > 0 ? billTypes.map((item) => (
                                         <tr key={item.id} className="border-b">
                                             <td className="p-4 font-medium">{item.name}</td>
+                                            <td className="p-4">{getCategoryBadge(item.category)}</td>
                                             <td className="p-4 font-bold text-blue-600">{formatRupiah(item.amount)}</td>
-                                            <td className="p-4">
-                                                <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${item.period === 'MONTHLY' ? 'bg-purple-100 text-purple-800' : 'bg-orange-100 text-orange-800'
-                                                    }`}>
-                                                    {item.period === 'MONTHLY' ? 'Bulanan' : 'Sekali Bayar'}
-                                                </span>
-                                            </td>
                                             <td className="p-4 text-gray-500">{item.description || '-'}</td>
                                             <td className="p-4 text-right space-x-2">
                                                 <Button variant="outline" size="sm" onClick={() => handleOpenModal(item)}>
@@ -172,23 +177,31 @@ export default function BillTypes() {
                         <CardContent>
                             <form onSubmit={handleSubmit} className="space-y-4">
                                 <div className="space-y-2">
-                                    <Label>Nama Tagihan</Label>
-                                    <Input value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} placeholder="Contoh: SPP Bulanan" required />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label>Jumlah (Rp)</Label>
-                                    <Input type="number" value={formData.amount} onChange={e => setFormData({ ...formData, amount: Number(e.target.value) })} required />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label>Periode</Label>
-                                    <Select value={formData.period} onChange={e => setFormData({ ...formData, period: e.target.value })}>
-                                        <option value="MONTHLY">Bulanan (Monthly)</option>
-                                        <option value="ONE_TIME">Sekali Bayar (One Time)</option>
+                                    <Label>Jenis Tagihan</Label>
+                                    <Select
+                                        value={formData.category}
+                                        onChange={e => setFormData({ ...formData, category: e.target.value })}
+                                    >
+                                        <option value="INFAQ">Uang Infaq</option>
+                                        <option value="KAS">Uang Kas</option>
                                     </Select>
                                 </div>
                                 <div className="space-y-2">
-                                    <Label>Deskripsi</Label>
-                                    <Input value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} placeholder="Keterangan tambahan..." />
+                                    <Label>Jumlah per Bulan (Rp)</Label>
+                                    <Input
+                                        type="number"
+                                        value={formData.amount}
+                                        onChange={e => setFormData({ ...formData, amount: Number(e.target.value) })}
+                                        required
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Deskripsi (Opsional)</Label>
+                                    <Input
+                                        value={formData.description}
+                                        onChange={e => setFormData({ ...formData, description: e.target.value })}
+                                        placeholder="Keterangan tambahan..."
+                                    />
                                 </div>
                                 <div className="flex justify-end gap-2 mt-6">
                                     <Button type="button" variant="ghost" onClick={handleCloseModal}>Batal</Button>

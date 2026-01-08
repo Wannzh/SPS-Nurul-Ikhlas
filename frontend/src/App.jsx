@@ -36,6 +36,7 @@ import UniformOrder from './pages/parent/UniformOrder';
 import MyOrders from './pages/parent/MyOrders';
 import UploadDocuments from './pages/parent/UploadDocuments';
 import SppPayment from './pages/parent/SppPayment';
+import MonthlyPayment from './pages/parent/MonthlyPayment';
 
 function App() {
   return (
@@ -73,6 +74,7 @@ function App() {
           <Route path="/parent/my-orders" element={<MyOrders />} />
           <Route path="/parent/upload-documents" element={<UploadDocuments />} />
           <Route path="/parent/spp-payment" element={<SppPayment />} />
+          <Route path="/parent/monthly-payment" element={<MonthlyPayment />} />
         </Route>
       </Routes>
     </AuthProvider>

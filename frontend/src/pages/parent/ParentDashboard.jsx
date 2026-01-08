@@ -165,8 +165,8 @@ export default function ParentDashboard() {
                         <Button variant="secondary" onClick={() => window.location.href = '/parent/upload-documents'}>
                             <FileUp className="mr-2 h-4 w-4" /> Upload Dokumen
                         </Button>
-                        <Button variant="default" onClick={() => window.location.href = '/parent/spp-payment'}>
-                            <Wallet className="mr-2 h-4 w-4" /> Bayar SPP
+                        <Button variant="default" onClick={() => window.location.href = '/parent/monthly-payment'}>
+                            <Wallet className="mr-2 h-4 w-4" /> Bayar Infaq & Kas
                         </Button>
                     </CardContent>
                 </Card>
