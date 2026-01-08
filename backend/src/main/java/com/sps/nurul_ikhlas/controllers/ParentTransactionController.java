@@ -17,6 +17,8 @@ import com.sps.nurul_ikhlas.models.entities.UniformOrder;
 import com.sps.nurul_ikhlas.payload.ApiResponse;
 import com.sps.nurul_ikhlas.payload.request.CreateUniformOrderRequest;
 import com.sps.nurul_ikhlas.payload.request.PaymentRequest;
+import com.sps.nurul_ikhlas.payload.request.SppPaymentRequest;
+import com.sps.nurul_ikhlas.payload.response.SppInfoResponse;
 import com.sps.nurul_ikhlas.services.PaymentService;
 import com.sps.nurul_ikhlas.services.StudentTransactionService;
 
@@ -65,5 +67,26 @@ public class ParentTransactionController {
     public ResponseEntity<ApiResponse<List<PaymentTransaction>>> getPaymentHistory(Principal principal) {
         List<PaymentTransaction> transactions = paymentService.getPaymentHistory(principal.getName());
         return ResponseEntity.ok(ApiResponse.success("Riwayat transaksi", transactions));
+    }
+
+    // SPP Endpoints
+    @GetMapping("/finance/spp-info")
+    public ResponseEntity<ApiResponse<SppInfoResponse>> getSppInfo(Principal principal) {
+        SppInfoResponse info = transactionService.getSppInfo(principal.getName());
+        return ResponseEntity.ok(ApiResponse.success("Informasi SPP", info));
+    }
+
+    @PostMapping("/payments/spp")
+    public ResponseEntity<ApiResponse<PaymentTransaction>> createSppPayment(
+            Principal principal,
+            @Valid @RequestBody SppPaymentRequest request) throws Exception {
+        PaymentTransaction transaction = transactionService.createSppPayment(principal.getName(), request.getMonths());
+        return ResponseEntity.ok(ApiResponse.success("Invoice SPP berhasil dibuat", transaction));
+    }
+
+    @GetMapping("/payments/spp-history")
+    public ResponseEntity<ApiResponse<List<PaymentTransaction>>> getSppHistory(Principal principal) {
+        List<PaymentTransaction> transactions = transactionService.getSppHistory(principal.getName());
+        return ResponseEntity.ok(ApiResponse.success("Riwayat pembayaran SPP", transactions));
     }
 }
